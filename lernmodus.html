@@ -218,9 +218,6 @@
     grid-template-rows: auto auto;
     gap: 12px;
   }
-  .atom-wide {
-    grid-column: 1;
-  }
 
   .taskline {
     margin: 0;
@@ -427,6 +424,7 @@
     border: 1px solid var(--line);
     background: radial-gradient(500px 240px at 50% 18%, rgba(125,211,252,.12), rgba(0,0,0,0));
     padding: 14px;
+    margin-top: 10px;
   }
   canvas { width: min(100%, 560px); height: auto; }
 
@@ -458,7 +456,6 @@
   @media (max-width: 980px) {
     .layout { grid-template-columns: 1fr; }
     .cards { grid-template-columns: 1fr 1fr; }
-    .atom-wide { grid-column: auto; }
   }
   @media (max-width: 560px) {
     .pse-layout { padding-left: 20px; padding-top: 18px; }
@@ -501,6 +498,16 @@
         <span><i style="background:#3f7d3f"></i>Nichtmetalle</span>
         <span><i style="background:#0e7490"></i>Halogene</span>
         <span><i style="background:#3b3b98"></i>Edelgase</span>
+      </div>
+
+      <div class="panel atom">
+        <canvas id="atomCanvas" width="560" height="560"></canvas>
+        <div class="counts">
+          <span id="cProtons">Protonen: 0</span>
+          <span id="cNeutrons">Neutronen: 0</span>
+          <span id="cRings">Ringe: 0</span>
+          <span id="cElectrons">Elektronen: 0</span>
+        </div>
       </div>
     </section>
 
@@ -567,16 +574,6 @@
       </div>
 
     </section>
-
-    <div class="panel atom atom-wide">
-      <canvas id="atomCanvas" width="560" height="560"></canvas>
-      <div class="counts">
-        <span id="cProtons">Protonen: 0</span>
-        <span id="cNeutrons">Neutronen: 0</span>
-        <span id="cRings">Ringe: 0</span>
-        <span id="cElectrons">Elektronen: 0</span>
-      </div>
-    </div>
   </div>
   <div id="help-pointer">--&gt;</div>
   <div id="help-overlay" aria-live="polite">
