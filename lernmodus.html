@@ -70,6 +70,17 @@
   }
 
   #pse-wrap { overflow-x: auto; }
+  #pse-meta {
+    margin: 8px auto 0;
+    max-width: 900px;
+    padding: 8px 10px;
+    text-align: center;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(9, 17, 35, 0.75);
+    color: var(--muted);
+    font-size: .82rem;
+  }
   #pse {
     width: max-content;
     display: grid;
@@ -231,6 +242,7 @@
       <div id="pse-wrap">
         <div id="pse"></div>
       </div>
+      <div id="pse-meta">PSE-Daten: Waehle ein Element, dann werden Periode, Hauptgruppe und Atommasse hier gezeigt.</div>
       <div class="legend">
         <span><i style="background:#8b1e3f"></i>Alkalimetalle</span>
         <span><i style="background:#8d5524"></i>Erdalkali</span>
@@ -338,7 +350,8 @@
       box.style.gridRow = el.row;
       box.dataset.z = el.z;
       box.innerHTML = `<span class="z">${el.z}</span><span class="sym">${el.sym}</span>`;
-      box.title = `${el.name} (${el.sym})`;
+      const hg = getMainGroup(el.group);
+      box.title = `${el.name} (${el.sym}) - Periode ${el.period}, Hauptgruppe ${hg === null ? '-' : hg}, Masse ${Math.round(el.mass)}`;
       box.addEventListener("click", () => selectElement(el));
       grid.appendChild(box);
     });
@@ -352,6 +365,9 @@
 
     state.selected = el;
     resetBuild();
+    const hg = getMainGroup(el.group);
+    document.getElementById("pse-meta").textContent =
+      `${el.name} (${el.sym}) · Periode: ${el.period} · Hauptgruppe: ${hg === null ? '-' : hg} · Atommasse: ${Math.round(el.mass)}`;
     setStatus(`Element gewaehlt: ${el.name} (${el.sym}). Jetzt Werte aus dem PSE ablesen und eintragen.`);
     document.getElementById("taskText").textContent =
       `Aufgabe: Baue ${el.name}. Lies Z, Periode, Hauptgruppe und Masse im PSE ab. ` +

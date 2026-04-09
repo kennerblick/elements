@@ -45,6 +45,17 @@
     overflow-x: auto;
     margin-bottom: 16px;
   }
+  #pse-meta {
+    max-width: 980px;
+    margin: 0 auto 12px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #1a2538;
+    border: 1px solid #2f3f57;
+    color: var(--muted);
+    font-size: 0.82rem;
+    text-align: center;
+  }
   #pse {
     display: grid;
     grid-template-columns: repeat(18, 42px);
@@ -241,6 +252,7 @@
 <div id="pse-wrapper">
   <div id="pse"></div>
 </div>
+<div id="pse-meta">PSE-Daten: Klicke ein Element an, um Periode, Hauptgruppe und Atommasse zu sehen.</div>
 
 <!-- Unten: Atommodell + Info -->
 <div id="lower">
@@ -413,6 +425,12 @@ function valenceElectrons(shells) {
   return shells[shells.length - 1];
 }
 
+function getMainGroup(group) {
+  if (group === 1 || group === 2) return group;
+  if (group >= 13 && group <= 18) return group - 10;
+  return null;
+}
+
 // ===== PSE rendern =====
 function buildPSE() {
   const grid = document.getElementById('pse');
@@ -421,12 +439,19 @@ function buildPSE() {
     div.className = `el cat-${el.cat}`;
     div.dataset.z = el.z;
     div.innerHTML = `<span class="num">${el.z}</span><span class="sym">${el.sym}</span><span class="nam">${el.name.substring(0,6)}</span>`;
-    div.title = `${el.name} (Z=${el.z}, Gruppe ${el.group}, Periode ${el.period})`;
+    const hg = getMainGroup(el.group);
+    div.title = `${el.name} (Z=${el.z}, Periode ${el.period}, Hauptgruppe ${hg === null ? '-' : hg}, Masse ${Math.round(el.mass)})`;
     div.style.gridColumn = el.col;
     div.style.gridRow = el.row;
     div.addEventListener('click', () => selectElement(el));
     grid.appendChild(div);
   });
+}
+
+function renderPseMeta(el) {
+  const hg = getMainGroup(el.group);
+  document.getElementById('pse-meta').textContent =
+    `${el.name} (${el.sym}) · Periode: ${el.period} · Hauptgruppe: ${hg === null ? '-' : hg} · Atommasse: ${Math.round(el.mass)}`;
 }
 
 // ===== Element auswählen =====
@@ -444,6 +469,7 @@ function selectElement(el) {
   const div = document.querySelector(`.el[data-z="${el.z}"]`);
   if (div) div.classList.add('selected');
 
+  renderPseMeta(el);
   renderInfo(el);
   startAtomAnimation(el);
 }
