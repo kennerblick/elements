@@ -502,31 +502,6 @@
         </p>
       </div>
 
-      <div class="panel" id="community-panel">
-        <div class="community-row">
-          <span class="community-label" id="vis-title">Besucherzaehler</span>
-          <span class="community-value" id="vis-count">...</span>
-        </div>
-        <div class="community-row">
-          <span class="community-label" id="score-title">Punktestand</span>
-          <span class="community-value" id="score-total">0.0</span>
-        </div>
-        <div id="score-round">Ohne Hilfe: 1.0 Punkt, mit Hilfe: 0.5 Punkte</div>
-        <div class="community-row">
-          <span class="community-label" id="rate-title">Bewertung Lernmodus</span>
-          <span class="community-value" id="rate-summary">-</span>
-        </div>
-        <div class="stars" id="star-wrap">
-          <button class="star-btn" data-rate="1" type="button">1</button>
-          <button class="star-btn" data-rate="2" type="button">2</button>
-          <button class="star-btn" data-rate="3" type="button">3</button>
-          <button class="star-btn" data-rate="4" type="button">4</button>
-          <button class="star-btn" data-rate="5" type="button">5</button>
-        </div>
-        <button class="primary" id="btnRate" type="button">Bewertung senden</button>
-        <div id="rating-msg"></div>
-      </div>
-
       <div class="panel">
         <div class="cards">
           <div class="field"><div class="label-row"><label>Ordnungszahl (Z)</label><button class="help-btn" data-help="z" title="Nothilfe">?</button></div><input id="inZ" type="number" min="1"></div>
@@ -551,6 +526,34 @@
           <button class="warn" id="btnAutoFill">Testen: bis Ziel auffuellen</button>
         </div>
         <div id="status" class="status"></div>
+      </div>
+
+      <div class="panel" id="rating-panel">
+        <div class="community-row">
+          <span class="community-label" id="score-title">Punktestand</span>
+          <span class="community-value" id="score-total">0.0</span>
+        </div>
+        <div id="score-round">Ohne Hilfe: 1.0 Punkt, mit Hilfe: 0.5 Punkte</div>
+        <div class="community-row">
+          <span class="community-label" id="rate-title">Bewertung Lernmodus</span>
+          <span class="community-value" id="rate-summary">-</span>
+        </div>
+        <div class="stars" id="star-wrap">
+          <button class="star-btn" data-rate="1" type="button">1</button>
+          <button class="star-btn" data-rate="2" type="button">2</button>
+          <button class="star-btn" data-rate="3" type="button">3</button>
+          <button class="star-btn" data-rate="4" type="button">4</button>
+          <button class="star-btn" data-rate="5" type="button">5</button>
+        </div>
+        <button class="primary" id="btnRate" type="button">Bewertung senden</button>
+        <div id="rating-msg"></div>
+      </div>
+
+      <div class="panel" id="visitor-panel">
+        <div class="community-row" style="margin-bottom:0">
+          <span class="community-label" id="vis-title">Besucherzaehler</span>
+          <span class="community-value" id="vis-count">...</span>
+        </div>
       </div>
 
     </section>
