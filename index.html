@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Periodensystem & Atommodell</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --card: #334155;
+    --accent: #38bdf8;
+    --accent2: #f59e0b;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --proton: #ef4444;
+    --neutron: #6b7280;
+    --electron: #38bdf8;
+    --ring1: #fde68a;
+    --ring2: #a5f3fc;
+    --ring3: #c4b5fd;
+    --ring4: #fca5a5;
+    --ring5: #86efac;
+    --ring6: #fdba74;
+    --ring7: #f9a8d4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 12px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.4rem;
+    color: var(--accent);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+
+  /* ===== PSE ===== */
+  #pse-wrapper {
+    overflow-x: auto;
+    margin-bottom: 16px;
+  }
+  #pse {
+    display: grid;
+    grid-template-columns: repeat(18, 42px);
+    grid-template-rows: repeat(10, 38px);
+    gap: 2px;
+    width: max-content;
+    margin: 0 auto;
+  }
+  .el {
+    width: 42px;
+    height: 38px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: 1.5px solid transparent;
+    position: relative;
+    user-select: none;
+  }
+  .el:hover { transform: scale(1.18); z-index: 10; box-shadow: 0 0 10px var(--accent); }
+  .el.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 14px var(--accent);
+    transform: scale(1.12);
+    z-index: 10;
+  }
+  .el .sym { font-size: 0.95rem; font-weight: 700; line-height: 1; }
+  .el .num { font-size: 0.5rem; color: rgba(255,255,255,0.7); line-height: 1; }
+  .el .nam { font-size: 0.38rem; color: rgba(255,255,255,0.6); line-height: 1; }
+
+  /* Kategoriefarben */
+  .cat-alkali        { background: #7f1d1d; }
+  .cat-alkali-earth  { background: #78350f; }
+  .cat-transition    { background: #1e3a5f; }
+  .cat-post-trans    { background: #134e4a; }
+  .cat-metalloid     { background: #2e1065; }
+  .cat-nonmetal      { background: #14532d; }
+  .cat-halogen       { background: #164e63; }
+  .cat-noble         { background: #1e1b4b; }
+  .cat-lanthanide    { background: #3b0764; }
+  .cat-actinide      { background: #831843; }
+
+  /* PSE Legende */
+  #legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .leg-dot {
+    width: 12px; height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ===== UNTERER BEREICH ===== */
+  #lower {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 16px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* Atom-Canvas */
+  #atom-panel {
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-height: 380px;
+  }
+  #atom-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent2);
+    text-align: center;
+  }
+  #atom-canvas {
+    border-radius: 50%;
+  }
+  #atom-hint {
+    color: var(--muted);
+    font-size: 0.82rem;
+    text-align: center;
+    padding-top: 40px;
+  }
+
+  /* Infopanel */
+  #info-panel {
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #info-panel h2 {
+    font-size: 1rem;
+    color: var(--accent);
+    border-bottom: 1px solid var(--card);
+    padding-bottom: 6px;
+  }
+  .info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .info-label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .info-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .info-explain {
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .highlight-proton  { color: var(--proton); }
+  .highlight-neutron { color: #9ca3af; }
+  .highlight-electron{ color: var(--electron); }
+  .highlight-period  { color: var(--accent2); }
+  .highlight-group   { color: #a78bfa; }
+
+  .info-ring-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 2px;
+  }
+  .ring-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+  }
+  .ring-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    #lower { grid-template-columns: 1fr; }
+    #pse { grid-template-columns: repeat(18, 36px); grid-template-rows: repeat(10, 32px); }
+    .el { width: 36px; height: 32px; }
+    .el .sym { font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Periodensystem & Atommodell</h1>
+
+<!-- Legende -->
+<div id="legend">
+  <div class="leg-item"><div class="leg-dot" style="background:#7f1d1d"></div>Alkali&shy;metalle</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#78350f"></div>Erd&shy;alkali</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#1e3a5f"></div>Übergangs&shy;metalle</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#134e4a"></div>Post&shy;übergangs</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#2e1065"></div>Metall&shy;oide</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#14532d"></div>Nicht&shy;metalle</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#164e63"></div>Halogene</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#1e1b4b"></div>Edel&shy;gase</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#3b0764"></div>Lantha&shy;noide</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#831843"></div>Actinoide</div>
+</div>
+
+<!-- PSE -->
+<div id="pse-wrapper">
+  <div id="pse"></div>
+</div>
+
+<!-- Unten: Atommodell + Info -->
+<div id="lower">
+  <div id="atom-panel">
+    <div id="atom-title">Atommodell</div>
+    <div id="atom-hint">Klick ein Element im Periodensystem an!</div>
+    <canvas id="atom-canvas" width="340" height="340" style="display:none"></canvas>
+  </div>
+
+  <div id="info-panel">
+    <h2 id="info-header">Element-Info</h2>
+    <div id="info-content" style="color:var(--muted);font-size:0.82rem">
+      Wähle ein Element aus dem Periodensystem, um hier alle Details zu sehen.
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Elementdaten: Z, Symbol, Name, Masse, Gruppe, Periode, Kat
+// Spalte (col) und Zeile (row) im PSE-Grid (1-basiert)
+// ============================================================
+const ELEMENTS = [
+  // Periode 1
+  {z:1,  sym:'H',  name:'Wasserstoff',    mass:1,   group:1,  period:1, cat:'nonmetal',    col:1,  row:1},
+  {z:2,  sym:'He', name:'Helium',         mass:4,   group:18, period:1, cat:'noble',       col:18, row:1},
+  // Periode 2
+  {z:3,  sym:'Li', name:'Lithium',        mass:7,   group:1,  period:2, cat:'alkali',      col:1,  row:2},
+  {z:4,  sym:'Be', name:'Beryllium',      mass:9,   group:2,  period:2, cat:'alkali-earth', col:2, row:2},
+  {z:5,  sym:'B',  name:'Bor',            mass:11,  group:13, period:2, cat:'metalloid',   col:13, row:2},
+  {z:6,  sym:'C',  name:'Kohlenstoff',    mass:12,  group:14, period:2, cat:'nonmetal',    col:14, row:2},
+  {z:7,  sym:'N',  name:'Stickstoff',     mass:14,  group:15, period:2, cat:'nonmetal',    col:15, row:2},
+  {z:8,  sym:'O',  name:'Sauerstoff',     mass:16,  group:16, period:2, cat:'nonmetal',    col:16, row:2},
+  {z:9,  sym:'F',  name:'Fluor',          mass:19,  group:17, period:2, cat:'halogen',     col:17, row:2},
+  {z:10, sym:'Ne', name:'Neon',           mass:20,  group:18, period:2, cat:'noble',       col:18, row:2},
+  // Periode 3
+  {z:11, sym:'Na', name:'Natrium',        mass:23,  group:1,  period:3, cat:'alkali',      col:1,  row:3},
+  {z:12, sym:'Mg', name:'Magnesium',      mass:24,  group:2,  period:3, cat:'alkali-earth', col:2, row:3},
+  {z:13, sym:'Al', name:'Aluminium',      mass:27,  group:13, period:3, cat:'post-trans',  col:13, row:3},
+  {z:14, sym:'Si', name:'Silizium',       mass:28,  group:14, period:3, cat:'metalloid',   col:14, row:3},
+  {z:15, sym:'P',  name:'Phosphor',       mass:31,  group:15, period:3, cat:'nonmetal',    col:15, row:3},
+  {z:16, sym:'S',  name:'Schwefel',       mass:32,  group:16, period:3, cat:'nonmetal',    col:16, row:3},
+  {z:17, sym:'Cl', name:'Chlor',          mass:35,  group:17, period:3, cat:'halogen',     col:17, row:3},
+  {z:18, sym:'Ar', name:'Argon',          mass:40,  group:18, period:3, cat:'noble',       col:18, row:3},
+  // Periode 4
+  {z:19, sym:'K',  name:'Kalium',         mass:39,  group:1,  period:4, cat:'alkali',      col:1,  row:4},
+  {z:20, sym:'Ca', name:'Calcium',        mass:40,  group:2,  period:4, cat:'alkali-earth', col:2, row:4},
+  {z:21, sym:'Sc', name:'Scandium',       mass:45,  group:3,  period:4, cat:'transition',  col:3,  row:4},
+  {z:22, sym:'Ti', name:'Titan',          mass:48,  group:4,  period:4, cat:'transition',  col:4,  row:4},
+  {z:23, sym:'V',  name:'Vanadium',       mass:51,  group:5,  period:4, cat:'transition',  col:5,  row:4},
+  {z:24, sym:'Cr', name:'Chrom',          mass:52,  group:6,  period:4, cat:'transition',  col:6,  row:4},
+  {z:25, sym:'Mn', name:'Mangan',         mass:55,  group:7,  period:4, cat:'transition',  col:7,  row:4},
+  {z:26, sym:'Fe', name:'Eisen',          mass:56,  group:8,  period:4, cat:'transition',  col:8,  row:4},
+  {z:27, sym:'Co', name:'Kobalt',         mass:59,  group:9,  period:4, cat:'transition',  col:9,  row:4},
+  {z:28, sym:'Ni', name:'Nickel',         mass:58,  group:10, period:4, cat:'transition',  col:10, row:4},
+  {z:29, sym:'Cu', name:'Kupfer',         mass:64,  group:11, period:4, cat:'transition',  col:11, row:4},
+  {z:30, sym:'Zn', name:'Zink',           mass:65,  group:12, period:4, cat:'transition',  col:12, row:4},
+  {z:31, sym:'Ga', name:'Gallium',        mass:70,  group:13, period:4, cat:'post-trans',  col:13, row:4},
+  {z:32, sym:'Ge', name:'Germanium',      mass:73,  group:14, period:4, cat:'metalloid',   col:14, row:4},
+  {z:33, sym:'As', name:'Arsen',          mass:75,  group:15, period:4, cat:'metalloid',   col:15, row:4},
+  {z:34, sym:'Se', name:'Selen',          mass:79,  group:16, period:4, cat:'nonmetal',    col:16, row:4},
+  {z:35, sym:'Br', name:'Brom',           mass:80,  group:17, period:4, cat:'halogen',     col:17, row:4},
+  {z:36, sym:'Kr', name:'Krypton',        mass:84,  group:18, period:4, cat:'noble',       col:18, row:4},
+  // Periode 5
+  {z:37, sym:'Rb', name:'Rubidium',       mass:85,  group:1,  period:5, cat:'alkali',      col:1,  row:5},
+  {z:38, sym:'Sr', name:'Strontium',      mass:88,  group:2,  period:5, cat:'alkali-earth', col:2, row:5},
+  {z:39, sym:'Y',  name:'Yttrium',        mass:89,  group:3,  period:5, cat:'transition',  col:3,  row:5},
+  {z:40, sym:'Zr', name:'Zirconium',      mass:91,  group:4,  period:5, cat:'transition',  col:4,  row:5},
+  {z:41, sym:'Nb', name:'Niob',           mass:93,  group:5,  period:5, cat:'transition',  col:5,  row:5},
+  {z:42, sym:'Mo', name:'Molybdän',       mass:96,  group:6,  period:5, cat:'transition',  col:6,  row:5},
+  {z:43, sym:'Tc', name:'Technetium',     mass:98,  group:7,  period:5, cat:'transition',  col:7,  row:5},
+  {z:44, sym:'Ru', name:'Ruthenium',      mass:101, group:8,  period:5, cat:'transition',  col:8,  row:5},
+  {z:45, sym:'Rh', name:'Rhodium',        mass:103, group:9,  period:5, cat:'transition',  col:9,  row:5},
+  {z:46, sym:'Pd', name:'Palladium',      mass:106, group:10, period:5, cat:'transition',  col:10, row:5},
+  {z:47, sym:'Ag', name:'Silber',         mass:108, group:11, period:5, cat:'transition',  col:11, row:5},
+  {z:48, sym:'Cd', name:'Cadmium',        mass:112, group:12, period:5, cat:'transition',  col:12, row:5},
+  {z:49, sym:'In', name:'Indium',         mass:115, group:13, period:5, cat:'post-trans',  col:13, row:5},
+  {z:50, sym:'Sn', name:'Zinn',           mass:119, group:14, period:5, cat:'post-trans',  col:14, row:5},
+  {z:51, sym:'Sb', name:'Antimon',        mass:122, group:15, period:5, cat:'metalloid',   col:15, row:5},
+  {z:52, sym:'Te', name:'Tellur',         mass:128, group:16, period:5, cat:'metalloid',   col:16, row:5},
+  {z:53, sym:'I',  name:'Iod',            mass:127, group:17, period:5, cat:'halogen',     col:17, row:5},
+  {z:54, sym:'Xe', name:'Xenon',          mass:131, group:18, period:5, cat:'noble',       col:18, row:5},
+  // Periode 6
+  {z:55, sym:'Cs', name:'Caesium',        mass:133, group:1,  period:6, cat:'alkali',      col:1,  row:6},
+  {z:56, sym:'Ba', name:'Barium',         mass:137, group:2,  period:6, cat:'alkali-earth', col:2, row:6},
+  {z:57, sym:'La', name:'Lanthan',        mass:139, group:3,  period:6, cat:'lanthanide',  col:3,  row:6},
+  {z:58, sym:'Ce', name:'Cer',            mass:140, group:3,  period:6, cat:'lanthanide',  col:4,  row:8},
+  {z:59, sym:'Pr', name:'Praseodym',      mass:141, group:3,  period:6, cat:'lanthanide',  col:5,  row:8},
+  {z:60, sym:'Nd', name:'Neodym',         mass:144, group:3,  period:6, cat:'lanthanide',  col:6,  row:8},
+  {z:61, sym:'Pm', name:'Promethium',     mass:145, group:3,  period:6, cat:'lanthanide',  col:7,  row:8},
+  {z:62, sym:'Sm', name:'Samarium',       mass:150, group:3,  period:6, cat:'lanthanide',  col:8,  row:8},
+  {z:63, sym:'Eu', name:'Europium',       mass:152, group:3,  period:6, cat:'lanthanide',  col:9,  row:8},
+  {z:64, sym:'Gd', name:'Gadolinium',     mass:157, group:3,  period:6, cat:'lanthanide',  col:10, row:8},
+  {z:65, sym:'Tb', name:'Terbium',        mass:159, group:3,  period:6, cat:'lanthanide',  col:11, row:8},
+  {z:66, sym:'Dy', name:'Dysprosium',     mass:163, group:3,  period:6, cat:'lanthanide',  col:12, row:8},
+  {z:67, sym:'Ho', name:'Holmium',        mass:165, group:3,  period:6, cat:'lanthanide',  col:13, row:8},
+  {z:68, sym:'Er', name:'Erbium',         mass:167, group:3,  period:6, cat:'lanthanide',  col:14, row:8},
+  {z:69, sym:'Tm', name:'Thulium',        mass:169, group:3,  period:6, cat:'lanthanide',  col:15, row:8},
+  {z:70, sym:'Yb', name:'Ytterbium',      mass:173, group:3,  period:6, cat:'lanthanide',  col:16, row:8},
+  {z:71, sym:'Lu', name:'Lutetium',       mass:175, group:3,  period:6, cat:'lanthanide',  col:17, row:8},
+  {z:72, sym:'Hf', name:'Hafnium',        mass:178, group:4,  period:6, cat:'transition',  col:4,  row:6},
+  {z:73, sym:'Ta', name:'Tantal',         mass:181, group:5,  period:6, cat:'transition',  col:5,  row:6},
+  {z:74, sym:'W',  name:'Wolfram',        mass:184, group:6,  period:6, cat:'transition',  col:6,  row:6},
+  {z:75, sym:'Re', name:'Rhenium',        mass:186, group:7,  period:6, cat:'transition',  col:7,  row:6},
+  {z:76, sym:'Os', name:'Osmium',         mass:190, group:8,  period:6, cat:'transition',  col:8,  row:6},
+  {z:77, sym:'Ir', name:'Iridium',        mass:192, group:9,  period:6, cat:'transition',  col:9,  row:6},
+  {z:78, sym:'Pt', name:'Platin',         mass:195, group:10, period:6, cat:'transition',  col:10, row:6},
+  {z:79, sym:'Au', name:'Gold',           mass:197, group:11, period:6, cat:'transition',  col:11, row:6},
+  {z:80, sym:'Hg', name:'Quecksilber',    mass:201, group:12, period:6, cat:'transition',  col:12, row:6},
+  {z:81, sym:'Tl', name:'Thallium',       mass:204, group:13, period:6, cat:'post-trans',  col:13, row:6},
+  {z:82, sym:'Pb', name:'Blei',           mass:207, group:14, period:6, cat:'post-trans',  col:14, row:6},
+  {z:83, sym:'Bi', name:'Bismut',         mass:209, group:15, period:6, cat:'post-trans',  col:15, row:6},
+  {z:84, sym:'Po', name:'Polonium',       mass:209, group:16, period:6, cat:'post-trans',  col:16, row:6},
+  {z:85, sym:'At', name:'Astat',          mass:210, group:17, period:6, cat:'halogen',     col:17, row:6},
+  {z:86, sym:'Rn', name:'Radon',          mass:222, group:18, period:6, cat:'noble',       col:18, row:6},
+  // Periode 7
+  {z:87, sym:'Fr', name:'Francium',       mass:223, group:1,  period:7, cat:'alkali',      col:1,  row:7},
+  {z:88, sym:'Ra', name:'Radium',         mass:226, group:2,  period:7, cat:'alkali-earth', col:2, row:7},
+  {z:89, sym:'Ac', name:'Actinium',       mass:227, group:3,  period:7, cat:'actinide',    col:3,  row:7},
+  {z:90, sym:'Th', name:'Thorium',        mass:232, group:3,  period:7, cat:'actinide',    col:4,  row:9},
+  {z:91, sym:'Pa', name:'Protactinium',   mass:231, group:3,  period:7, cat:'actinide',    col:5,  row:9},
+  {z:92, sym:'U',  name:'Uran',           mass:238, group:3,  period:7, cat:'actinide',    col:6,  row:9},
+  {z:93, sym:'Np', name:'Neptunium',      mass:237, group:3,  period:7, cat:'actinide',    col:7,  row:9},
+  {z:94, sym:'Pu', name:'Plutonium',      mass:244, group:3,  period:7, cat:'actinide',    col:8,  row:9},
+  {z:95, sym:'Am', name:'Americium',      mass:243, group:3,  period:7, cat:'actinide',    col:9,  row:9},
+  {z:96, sym:'Cm', name:'Curium',         mass:247, group:3,  period:7, cat:'actinide',    col:10, row:9},
+  {z:97, sym:'Bk', name:'Berkelium',      mass:247, group:3,  period:7, cat:'actinide',    col:11, row:9},
+  {z:98, sym:'Cf', name:'Californium',    mass:251, group:3,  period:7, cat:'actinide',    col:12, row:9},
+  {z:99, sym:'Es', name:'Einsteinium',    mass:252, group:3,  period:7, cat:'actinide',    col:13, row:9},
+  {z:100,sym:'Fm', name:'Fermium',        mass:257, group:3,  period:7, cat:'actinide',    col:14, row:9},
+  {z:101,sym:'Md', name:'Mendelevium',    mass:258, group:3,  period:7, cat:'actinide',    col:15, row:9},
+  {z:102,sym:'No', name:'Nobelium',       mass:259, group:3,  period:7, cat:'actinide',    col:16, row:9},
+  {z:103,sym:'Lr', name:'Lawrencium',     mass:262, group:3,  period:7, cat:'actinide',    col:17, row:9},
+  {z:104,sym:'Rf', name:'Rutherfordium',  mass:267, group:4,  period:7, cat:'transition',  col:4,  row:7},
+  {z:105,sym:'Db', name:'Dubnium',        mass:268, group:5,  period:7, cat:'transition',  col:5,  row:7},
+  {z:106,sym:'Sg', name:'Seaborgium',     mass:269, group:6,  period:7, cat:'transition',  col:6,  row:7},
+  {z:107,sym:'Bh', name:'Bohrium',        mass:270, group:7,  period:7, cat:'transition',  col:7,  row:7},
+  {z:108,sym:'Hs', name:'Hassium',        mass:277, group:8,  period:7, cat:'transition',  col:8,  row:7},
+  {z:109,sym:'Mt', name:'Meitnerium',     mass:278, group:9,  period:7, cat:'transition',  col:9,  row:7},
+  {z:110,sym:'Ds', name:'Darmstadtium',   mass:281, group:10, period:7, cat:'transition',  col:10, row:7},
+  {z:111,sym:'Rg', name:'Roentgenium',    mass:282, group:11, period:7, cat:'transition',  col:11, row:7},
+  {z:112,sym:'Cn', name:'Copernicium',    mass:285, group:12, period:7, cat:'transition',  col:12, row:7},
+  {z:113,sym:'Nh', name:'Nihonium',       mass:286, group:13, period:7, cat:'post-trans',  col:13, row:7},
+  {z:114,sym:'Fl', name:'Flerovium',      mass:289, group:14, period:7, cat:'post-trans',  col:14, row:7},
+  {z:115,sym:'Mc', name:'Moscovium',      mass:290, group:15, period:7, cat:'post-trans',  col:15, row:7},
+  {z:116,sym:'Lv', name:'Livermorium',    mass:293, group:16, period:7, cat:'post-trans',  col:16, row:7},
+  {z:117,sym:'Ts', name:'Tennessine',     mass:294, group:17, period:7, cat:'halogen',     col:17, row:7},
+  {z:118,sym:'Og', name:'Oganesson',      mass:294, group:18, period:7, cat:'noble',       col:18, row:7},
+];
+
+// Elektronenkapazität pro Schale (Bohrsches Modell, vereinfacht)
+const SHELL_CAPACITY = [2, 8, 8, 18, 18, 32, 32];
+const SHELL_NAMES    = ['K','L','M','N','O','P','Q'];
+const RING_COLORS    = ['#fde68a','#a5f3fc','#c4b5fd','#fca5a5','#86efac','#fdba74','#f9a8d4'];
+
+// Elektronen je Ring für Atom Z (vereinfacht Bohrsches Modell für Hauptgruppen)
+function calcShells(z) {
+  let shells = [];
+  let remaining = z;
+  for (let i = 0; i < SHELL_CAPACITY.length && remaining > 0; i++) {
+    const n = Math.min(remaining, SHELL_CAPACITY[i]);
+    shells.push(n);
+    remaining -= n;
+  }
+  return shells;
+}
+
+// Valenz-Elektronen: letzte Schale
+function valenceElectrons(shells) {
+  return shells[shells.length - 1];
+}
+
+// ===== PSE rendern =====
+function buildPSE() {
+  const grid = document.getElementById('pse');
+  ELEMENTS.forEach(el => {
+    const div = document.createElement('div');
+    div.className = `el cat-${el.cat}`;
+    div.dataset.z = el.z;
+    div.innerHTML = `<span class="num">${el.z}</span><span class="sym">${el.sym}</span><span class="nam">${el.name.substring(0,6)}</span>`;
+    div.title = `${el.name} (Z=${el.z}, Gruppe ${el.group}, Periode ${el.period})`;
+    div.style.gridColumn = el.col;
+    div.style.gridRow = el.row;
+    div.addEventListener('click', () => selectElement(el));
+    grid.appendChild(div);
+  });
+}
+
+// ===== Element auswählen =====
+let selectedEl = null;
+let animFrame = null;
+let rotAngle = 0;
+
+function selectElement(el) {
+  // Vorherige Auswahl aufheben
+  if (selectedEl) {
+    const prev = document.querySelector(`.el[data-z="${selectedEl.z}"]`);
+    if (prev) prev.classList.remove('selected');
+  }
+  selectedEl = el;
+  const div = document.querySelector(`.el[data-z="${el.z}"]`);
+  if (div) div.classList.add('selected');
+
+  renderInfo(el);
+  startAtomAnimation(el);
+}
+
+// ===== Info-Panel =====
+function renderInfo(el) {
+  const protons  = el.z;
+  const neutrons = Math.round(el.mass) - protons;
+  const electrons= protons;
+  const shells   = calcShells(protons);
+  const valence  = valenceElectrons(shells);
+  const period   = el.period;
+  const group    = el.group;
+
+  document.getElementById('info-header').textContent = `${el.name} (${el.sym})`;
+
+  // Ringe aufbereiten
+  let ringRows = shells.map((count, i) => {
+    const cap = SHELL_CAPACITY[i];
+    const pct = Math.round(count / cap * 100);
+    return `<div class="ring-row">
+      <div class="ring-dot" style="background:${RING_COLORS[i]}"></div>
+      <span style="color:${RING_COLORS[i]};font-weight:600">${SHELL_NAMES[i]}-Schale</span>:
+      &nbsp;<strong>${count}</strong> / ${cap} Elektronen
+      &nbsp;<span style="color:var(--muted)">(${pct}% voll)</span>
+    </div>`;
+  }).join('');
+
+  // Wertigkeit / Gruppe erklären
+  let groupHint = '';
+  if (group >= 1 && group <= 2) {
+    groupHint = `Hauptgruppe ${group} → ${valence} Valenzelong(en). Diese Elemente geben gerne Elektronen ab.`;
+  } else if (group >= 13 && group <= 17) {
+    const hg = group - 10;
+    groupHint = `Hauptgruppe ${hg} → ${valence} Valenzelong(en). Tendenz: Elektronen aufnehmen bis 8 erreicht (Oktettregel).`;
+  } else if (group === 18) {
+    groupHint = `Hauptgruppe 8 (Edelgase) → ${valence} Valenzelektronen. Vollständig besetzt – sehr stabil, keine Reaktionen.`;
+  } else {
+    groupHint = `Übergangsmetall, Gruppe ${group}. ${valence} Elektronen in der Außenschale.`;
+  }
+
+  document.getElementById('info-content').innerHTML = `
+    <div class="info-row">
+      <span class="info-label">Ordnungszahl (Z)</span>
+      <span class="info-value highlight-proton">${protons}</span>
+      <span class="info-explain">= Anzahl der <strong>Protonen</strong> im Atomkern<br>= Anzahl der <strong>Elektronen</strong> in der Hülle (neutrales Atom)</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Massenzahl (gerundet)</span>
+      <span class="info-value">${Math.round(el.mass)}</span>
+      <span class="info-explain">Atomare Masse ≈ Protonen + Neutronen</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Protonen</span>
+      <span class="info-value highlight-proton">${protons} p<sup>+</sup></span>
+      <span class="info-explain">Positiv geladen, im Kern</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Neutronen</span>
+      <span class="info-value highlight-neutron">${neutrons} n</span>
+      <span class="info-explain">Neutral, im Kern · Berechnung: ${Math.round(el.mass)} − ${protons} = ${neutrons}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Elektronen</span>
+      <span class="info-value highlight-electron">${electrons} e<sup>−</sup></span>
+      <span class="info-explain">Negativ geladen, in der Hülle</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Periode (= Anzahl Schalen)</span>
+      <span class="info-value highlight-period">${period}</span>
+      <span class="info-explain">Zeile im PSE = Anzahl der Elektronenschalen</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Valenzelektronen (Außenschale)</span>
+      <span class="info-value highlight-group">${valence}</span>
+      <span class="info-explain">${groupHint}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Elektronenschalen</span>
+      <div class="info-ring-list">${ringRows}</div>
+    </div>
+  `;
+}
+
+// ===== Atom-Animation =====
+function startAtomAnimation(el) {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  rotAngle = 0;
+  const canvas = document.getElementById('atom-canvas');
+  const hint   = document.getElementById('atom-hint');
+  hint.style.display = 'none';
+  canvas.style.display = 'block';
+  document.getElementById('atom-title').textContent = `${el.name} · ${el.sym}`;
+
+  const protons  = el.z;
+  const neutrons = Math.round(el.mass) - protons;
+  const shells   = calcShells(protons);
+
+  function draw() {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2;
+    ctx.clearRect(0, 0, W, H);
+
+    // Hintergrund-Schimmer
+    const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, W * 0.5);
+    bgGrad.addColorStop(0, 'rgba(56,189,248,0.04)');
+    bgGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Elektronenbahnen zeichnen
+    const maxShells = shells.length;
+    const kernR = Math.min(32 + protons * 0.5, 52);
+    const ringStep = Math.min((W/2 - kernR - 18) / maxShells, 48);
+
+    shells.forEach((count, i) => {
+      const r = kernR + (i + 1) * ringStep;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = RING_COLORS[i] + '40';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Elektronen auf der Bahn
+      for (let e = 0; e < count; e++) {
+        const angle = (2 * Math.PI / count) * e + rotAngle * (i % 2 === 0 ? 1 : -1) * (0.5 + i * 0.15);
+        const ex = cx + r * Math.cos(angle);
+        const ey = cy + r * Math.sin(angle);
+
+        // Leuchten
+        const glow = ctx.createRadialGradient(ex, ey, 0, ex, ey, 7);
+        glow.addColorStop(0, RING_COLORS[i]);
+        glow.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.arc(ex, ey, 7, 0, Math.PI * 2);
+        ctx.fillStyle = glow;
+        ctx.fill();
+
+        // Kern
+        ctx.beginPath();
+        ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = RING_COLORS[i];
+        ctx.fill();
+
+        // Schalenname beim ersten Elektron
+        if (e === 0) {
+          ctx.font = '9px Segoe UI';
+          ctx.fillStyle = RING_COLORS[i] + 'cc';
+          ctx.fillText(SHELL_NAMES[i], cx + r + 3, cy - 4);
+        }
+      }
+    });
+
+    // Atomkern
+    const kgrad = ctx.createRadialGradient(cx - kernR*0.2, cy - kernR*0.2, 2, cx, cy, kernR);
+    kgrad.addColorStop(0, '#f87171');
+    kgrad.addColorStop(0.5, '#dc2626');
+    kgrad.addColorStop(1, '#7f1d1d');
+    ctx.beginPath();
+    ctx.arc(cx, cy, kernR, 0, Math.PI * 2);
+    ctx.fillStyle = kgrad;
+    ctx.fill();
+    ctx.strokeStyle = '#fca5a5';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // p+ und n im Kern
+    const kernFontSize = Math.max(8, Math.min(13, kernR * 0.38));
+    ctx.font = `bold ${kernFontSize}px Segoe UI`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.fillStyle = '#fecaca';
+    ctx.fillText(`${protons} p⁺`, cx, cy - kernFontSize * 0.6);
+    ctx.fillStyle = '#d1d5db';
+    ctx.fillText(`${neutrons} n`, cx, cy + kernFontSize * 0.8);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+
+    rotAngle += 0.012;
+    animFrame = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ===== Init =====
+buildPSE();
+</script>
+</body>
+</html>
