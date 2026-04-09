@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSE Lernmodus: Atom selbst bauen</title>
+<style>
+  :root {
+    --bg-1: #071026;
+    --bg-2: #1a2a56;
+    --panel: rgba(10, 19, 40, 0.86);
+    --line: rgba(186, 220, 255, 0.22);
+    --txt: #e9f2ff;
+    --muted: #97abc9;
+    --good: #36d399;
+    --bad: #f87272;
+    --accent: #7dd3fc;
+    --accent-2: #fbbf24;
+    --p: #ff6b6b;
+    --n: #94a3b8;
+    --e: #67e8f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--txt);
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    background:
+      radial-gradient(1200px 500px at 20% -20%, #37569b 0%, transparent 50%),
+      radial-gradient(900px 500px at 85% 0%, #1d7f9e 0%, transparent 45%),
+      linear-gradient(140deg, var(--bg-1), var(--bg-2));
+    min-height: 100vh;
+    padding: 18px;
+  }
+  .topbar {
+    max-width: 1200px;
+    margin: 0 auto 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+    letter-spacing: 0.4px;
+  }
+  .mode-link {
+    color: #071026;
+    background: linear-gradient(110deg, #7dd3fc, #fbbf24);
+    text-decoration: none;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 8px 14px;
+  }
+
+  .layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 16px;
+  }
+  .panel {
+    background: var(--panel);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  #pse-wrap { overflow-x: auto; }
+  #pse {
+    width: max-content;
+    display: grid;
+    grid-template-columns: repeat(18, 40px);
+    grid-template-rows: repeat(10, 36px);
+    gap: 2px;
+    margin: 0 auto;
+  }
+  .el {
+    width: 40px;
+    height: 36px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    display: grid;
+    place-items: center;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .el:hover { transform: translateY(-1px) scale(1.08); box-shadow: 0 0 14px rgba(125,211,252,.6); z-index: 2; }
+  .el.active { border-color: #dbeafe; box-shadow: 0 0 0 2px rgba(255,255,255,.17), 0 0 16px rgba(125,211,252,.7); }
+  .el .sym { font-size: .86rem; font-weight: 700; }
+  .el .z { position: absolute; top: 1px; left: 3px; font-size: .49rem; opacity: .8; }
+
+  .cat-alkali{background:#8b1e3f;} .cat-alkali-earth{background:#8d5524;}
+  .cat-transition{background:#1f4e79;} .cat-post-trans{background:#2f6f5f;}
+  .cat-metalloid{background:#5e3c99;} .cat-nonmetal{background:#3f7d3f;}
+  .cat-halogen{background:#0e7490;} .cat-noble{background:#3b3b98;}
+  .cat-lanthanide{background:#7e22ce;} .cat-actinide{background:#be185d;}
+
+  .legend {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: .74rem;
+    color: var(--muted);
+    justify-content: center;
+  }
+  .legend i {
+    width: 11px;
+    height: 11px;
+    display: inline-block;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: -1px;
+  }
+
+  .right-grid {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 12px;
+  }
+
+  .taskline {
+    margin: 0;
+    color: var(--muted);
+    font-size: .88rem;
+    line-height: 1.45;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .field label {
+    font-size: .74rem;
+    color: var(--muted);
+  }
+  .field input {
+    width: 100%;
+    border: 1px solid var(--line);
+    background: #0f1a34;
+    color: var(--txt);
+    border-radius: 8px;
+    padding: 8px 9px;
+    font-size: .9rem;
+  }
+  .btn-row {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  button {
+    border: 1px solid var(--line);
+    background: #0f1a34;
+    color: var(--txt);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button.primary { background: linear-gradient(110deg,#0891b2,#0ea5e9); border-color: transparent; }
+  button.good { background: linear-gradient(110deg,#047857,#16a34a); border-color: transparent; }
+  button.warn { background: linear-gradient(110deg,#9a3412,#ea580c); border-color: transparent; }
+
+  .status {
+    margin-top: 8px;
+    min-height: 21px;
+    font-size: .86rem;
+    color: var(--muted);
+  }
+  .status.ok { color: var(--good); }
+  .status.bad { color: var(--bad); }
+
+  .atom {
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: radial-gradient(500px 240px at 50% 18%, rgba(125,211,252,.12), rgba(0,0,0,0));
+    padding: 8px;
+  }
+  canvas { width: min(100%, 390px); height: auto; }
+
+  .counts {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: .78rem;
+  }
+  .counts span {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 9px;
+    background: rgba(9,17,35,.7);
+  }
+
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    #pse { grid-template-columns: repeat(18, 34px); grid-template-rows: repeat(10, 31px); }
+    .el { width: 34px; height: 31px; }
+    .el .sym { font-size: .77rem; }
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>Lernmodus: Atommodell selbst aufbauen</h1>
+    <a class="mode-link" href="index.html">Variante 1: Automatisch</a>
+  </div>
+
+  <div class="layout">
+    <section class="panel">
+      <div id="pse-wrap">
+        <div id="pse"></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:#8b1e3f"></i>Alkalimetalle</span>
+        <span><i style="background:#8d5524"></i>Erdalkali</span>
+        <span><i style="background:#1f4e79"></i>Uebergangsmetalle</span>
+        <span><i style="background:#2f6f5f"></i>Post-Uebergangs</span>
+        <span><i style="background:#5e3c99"></i>Metalloide</span>
+        <span><i style="background:#3f7d3f"></i>Nichtmetalle</span>
+        <span><i style="background:#0e7490"></i>Halogene</span>
+        <span><i style="background:#3b3b98"></i>Edelgase</span>
+      </div>
+    </section>
+
+    <section class="right-grid">
+      <div class="panel">
+        <p class="taskline" id="taskText">
+          1) Waehle ein Element im PSE. 2) Lies Hauptgruppe, Periode, Ordnungszahl und Masse selbst ab.
+          3) Trage die Werte ein und pruefe sie. 4) Setze Protonen, Neutronen, Ringe und Elektronen einzeln.
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="cards">
+          <div class="field"><label>Ordnungszahl (Z)</label><input id="inZ" type="number" min="1"></div>
+          <div class="field"><label>Masse (gerundet)</label><input id="inMass" type="number" min="1"></div>
+          <div class="field"><label>Periode</label><input id="inPeriod" type="number" min="1" max="7"></div>
+          <div class="field"><label>Hauptgruppe (1-8)</label><input id="inMainGroup" type="number" min="1" max="8"></div>
+          <div class="field"><label>Protonen</label><input id="inProtons" type="number" min="0"></div>
+          <div class="field"><label>Neutronen</label><input id="inNeutrons" type="number" min="0"></div>
+          <div class="field"><label>Elektronen gesamt</label><input id="inElectrons" type="number" min="0"></div>
+          <div class="field"><label>Valenzelektronen</label><input id="inValence" type="number" min="0" max="8"></div>
+        </div>
+        <div class="btn-row">
+          <button class="primary" id="btnCheck">Eingaben pruefen</button>
+          <button id="btnResetBuild">Modell leeren</button>
+          <button id="btnHint">Hinweis zeigen</button>
+        </div>
+        <div class="btn-row">
+          <button class="good" id="btnAddRing">+ 1 Ring setzen</button>
+          <button class="good" id="btnAddProton">+ 1 Proton setzen</button>
+          <button class="good" id="btnAddNeutron">+ 1 Neutron setzen</button>
+          <button class="good" id="btnAddElectron">+ 1 Elektron setzen</button>
+          <button class="warn" id="btnAutoFill">Testen: bis Ziel auffuellen</button>
+        </div>
+        <div id="status" class="status"></div>
+      </div>
+
+      <div class="panel atom">
+        <canvas id="atomCanvas" width="390" height="390"></canvas>
+        <div class="counts">
+          <span id="cProtons">Protonen: 0</span>
+          <span id="cNeutrons">Neutronen: 0</span>
+          <span id="cRings">Ringe: 0</span>
+          <span id="cElectrons">Elektronen: 0</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script src="elements-data.js"></script>
+<script>
+  const SHELL_CAPACITY = [2, 8, 18, 32, 32, 18, 8];
+  const SHELL_NAMES = ["K", "L", "M", "N", "O", "P", "Q"];
+  const RING_COLORS = ["#fde68a", "#a5f3fc", "#c4b5fd", "#fca5a5", "#86efac", "#fdba74", "#f9a8d4"];
+
+  const state = {
+    selected: null,
+    build: {
+      protons: 0,
+      neutrons: 0,
+      rings: 0,
+      electronsPerRing: []
+    }
+  };
+
+  function getMainGroup(group) {
+    if (group === 1) return 1;
+    if (group === 2) return 2;
+    if (group >= 13 && group <= 18) return group - 10;
+    return null;
+  }
+
+  function valenceFromMainGroup(mainGroup) {
+    if (!mainGroup) return null;
+    return mainGroup === 8 ? 8 : mainGroup;
+  }
+
+  function getExpected(el) {
+    const z = el.z;
+    const mass = Math.round(el.mass);
+    const protons = z;
+    const neutrons = Math.max(0, mass - protons);
+    const electrons = z;
+    const period = el.period;
+    const mainGroup = getMainGroup(el.group);
+    const valence = valenceFromMainGroup(mainGroup);
+    return { z, mass, protons, neutrons, electrons, period, mainGroup, valence };
+  }
+
+  function buildPSE() {
+    const grid = document.getElementById("pse");
+    ELEMENTS.forEach(el => {
+      const box = document.createElement("div");
+      box.className = `el cat-${el.cat}`;
+      box.style.gridColumn = el.col;
+      box.style.gridRow = el.row;
+      box.dataset.z = el.z;
+      box.innerHTML = `<span class="z">${el.z}</span><span class="sym">${el.sym}</span>`;
+      box.title = `${el.name} (${el.sym})`;
+      box.addEventListener("click", () => selectElement(el));
+      grid.appendChild(box);
+    });
+  }
+
+  function selectElement(el) {
+    const old = document.querySelector(".el.active");
+    if (old) old.classList.remove("active");
+    const now = document.querySelector(`.el[data-z='${el.z}']`);
+    if (now) now.classList.add("active");
+
+    state.selected = el;
+    resetBuild();
+    setStatus(`Element gewaehlt: ${el.name} (${el.sym}). Jetzt Werte aus dem PSE ablesen und eintragen.`);
+    document.getElementById("taskText").textContent =
+      `Aufgabe: Baue ${el.name}. Lies Z, Periode, Hauptgruppe und Masse im PSE ab. ` +
+      `Dann berechne Neutronen mit Masse - Protonen.`;
+    drawAtom();
+  }
+
+  function getInputValue(id) {
+    const v = Number(document.getElementById(id).value);
+    return Number.isFinite(v) ? v : NaN;
+  }
+
+  function setStatus(msg, kind = "") {
+    const s = document.getElementById("status");
+    s.textContent = msg;
+    s.className = `status ${kind}`.trim();
+  }
+
+  function checkInputs() {
+    if (!state.selected) {
+      setStatus("Bitte zuerst ein Element im PSE anklicken.", "bad");
+      return;
+    }
+    const exp = getExpected(state.selected);
+
+    const checks = [
+      ["Ordnungszahl", getInputValue("inZ"), exp.z],
+      ["Masse", getInputValue("inMass"), exp.mass],
+      ["Periode", getInputValue("inPeriod"), exp.period],
+      ["Protonen", getInputValue("inProtons"), exp.protons],
+      ["Neutronen", getInputValue("inNeutrons"), exp.neutrons],
+      ["Elektronen", getInputValue("inElectrons"), exp.electrons]
+    ];
+
+    if (exp.mainGroup !== null) {
+      checks.push(["Hauptgruppe", getInputValue("inMainGroup"), exp.mainGroup]);
+      checks.push(["Valenzelektronen", getInputValue("inValence"), exp.valence]);
+    }
+
+    const wrong = checks.filter(c => c[1] !== c[2]);
+    if (wrong.length === 0) {
+      setStatus("Sehr gut! Alle Eingaben sind korrekt. Jetzt das Atommodell mit den Buttons aufbauen.", "ok");
+    } else {
+      const detail = wrong.slice(0, 3).map(c => `${c[0]}!=${c[2]}`).join(" | ");
+      setStatus(`Noch nicht ganz: ${detail}${wrong.length > 3 ? " ..." : ""}`, "bad");
+    }
+  }
+
+  function resetBuild() {
+    state.build.protons = 0;
+    state.build.neutrons = 0;
+    state.build.rings = 0;
+    state.build.electronsPerRing = [];
+    updateCountChips();
+  }
+
+  function expectedFromInputs() {
+    return {
+      protons: Math.max(0, getInputValue("inProtons") || 0),
+      neutrons: Math.max(0, getInputValue("inNeutrons") || 0),
+      rings: Math.max(0, Math.min(7, getInputValue("inPeriod") || 0)),
+      electrons: Math.max(0, getInputValue("inElectrons") || 0)
+    };
+  }
+
+  function addRing() {
+    const target = expectedFromInputs().rings;
+    if (target <= 0) {
+      setStatus("Trage zuerst die Periode als Anzahl Ringe ein.", "bad");
+      return;
+    }
+    if (state.build.rings >= 7) {
+      setStatus("Mehr als 7 Ringe gibt es nicht.", "bad");
+      return;
+    }
+    if (state.build.rings >= target) {
+      setStatus("Du hast bereits genug Ringe fuer deinen eingetragenen Wert gesetzt.", "bad");
+      return;
+    }
+    state.build.rings += 1;
+    if (!state.build.electronsPerRing[state.build.rings - 1]) state.build.electronsPerRing[state.build.rings - 1] = 0;
+    setStatus(`Ring ${SHELL_NAMES[state.build.rings - 1]} gesetzt.`, "ok");
+    updateCountChips();
+    drawAtom();
+  }
+
+  function addProton() {
+    const target = expectedFromInputs().protons;
+    if (target <= 0) return setStatus("Bitte Protonenzahl eintragen.", "bad");
+    if (state.build.protons >= target) return setStatus("Protonen-Ziel bereits erreicht.", "bad");
+    state.build.protons += 1;
+    setStatus(`Proton gesetzt (${state.build.protons}/${target}).`, "ok");
+    updateCountChips();
+    drawAtom();
+    checkBuildComplete();
+  }
+
+  function addNeutron() {
+    const target = expectedFromInputs().neutrons;
+    if (target <= 0) return setStatus("Bitte Neutronenzahl eintragen.", "bad");
+    if (state.build.neutrons >= target) return setStatus("Neutronen-Ziel bereits erreicht.", "bad");
+    state.build.neutrons += 1;
+    setStatus(`Neutron gesetzt (${state.build.neutrons}/${target}).`, "ok");
+    updateCountChips();
+    drawAtom();
+    checkBuildComplete();
+  }
+
+  function addElectron() {
+    const target = expectedFromInputs().electrons;
+    if (target <= 0) return setStatus("Bitte Elektronenzahl eintragen.", "bad");
+    if (state.build.rings <= 0) return setStatus("Setze zuerst mindestens einen Ring.", "bad");
+
+    const current = state.build.electronsPerRing.reduce((a, b) => a + b, 0);
+    if (current >= target) return setStatus("Elektronen-Ziel bereits erreicht.", "bad");
+
+    let placed = false;
+    for (let i = 0; i < state.build.rings; i++) {
+      const cur = state.build.electronsPerRing[i] || 0;
+      const cap = SHELL_CAPACITY[i];
+      if (cur < cap) {
+        state.build.electronsPerRing[i] = cur + 1;
+        placed = true;
+        setStatus(`Elektron auf ${SHELL_NAMES[i]}-Schale gesetzt.`, "ok");
+        break;
+      }
+    }
+
+    if (!placed) {
+      setStatus("Alle gesetzten Schalen sind voll. Setze einen weiteren Ring.", "bad");
+      return;
+    }
+
+    updateCountChips();
+    drawAtom();
+    checkBuildComplete();
+  }
+
+  function checkBuildComplete() {
+    const t = expectedFromInputs();
+    const eNow = state.build.electronsPerRing.reduce((a,b)=>a+b,0);
+    if (
+      t.protons > 0 && t.neutrons >= 0 && t.rings > 0 && t.electrons > 0 &&
+      state.build.protons === t.protons &&
+      state.build.neutrons === t.neutrons &&
+      state.build.rings === t.rings &&
+      eNow === t.electrons
+    ) {
+      setStatus("Atommodell komplett nach deinen Angaben aufgebaut.", "ok");
+    }
+  }
+
+  function autoFillToInputTargets() {
+    const t = expectedFromInputs();
+    if (t.protons <= 0 || t.electrons <= 0 || t.rings <= 0) {
+      setStatus("Trage zuerst mindestens Protonen, Elektronen und Periode ein.", "bad");
+      return;
+    }
+    state.build.protons = t.protons;
+    state.build.neutrons = t.neutrons;
+    state.build.rings = t.rings;
+    state.build.electronsPerRing = Array.from({ length: state.build.rings }, () => 0);
+
+    let left = t.electrons;
+    for (let i = 0; i < state.build.rings && left > 0; i++) {
+      const fill = Math.min(left, SHELL_CAPACITY[i]);
+      state.build.electronsPerRing[i] = fill;
+      left -= fill;
+    }
+
+    if (left > 0) {
+      setStatus("Achtung: Zu viele Elektronen fuer die eingetragenen Ringe. Erhoehe die Periode.", "bad");
+    } else {
+      setStatus("Testaufbau bis zu deinen Zielwerten ausgefuellt.", "ok");
+    }
+    updateCountChips();
+    drawAtom();
+  }
+
+  function showHint() {
+    if (!state.selected) {
+      setStatus("Waehle zuerst ein Element.", "bad");
+      return;
+    }
+    const exp = getExpected(state.selected);
+    const mainText = exp.mainGroup === null ? "(keine klassische Hauptgruppe)" : exp.mainGroup;
+    const valText = exp.valence === null ? "(nicht eindeutig im vereinfachten Modell)" : exp.valence;
+    setStatus(
+      `Hinweis: Z=${exp.z}, Masse~${exp.mass}, Periode=${exp.period}, Hauptgruppe=${mainText}, Valenz=${valText}, n=${exp.neutrons}.`,
+      ""
+    );
+  }
+
+  function updateCountChips() {
+    const eNow = state.build.electronsPerRing.reduce((a,b)=>a+b,0);
+    document.getElementById("cProtons").textContent = `Protonen: ${state.build.protons}`;
+    document.getElementById("cNeutrons").textContent = `Neutronen: ${state.build.neutrons}`;
+    document.getElementById("cRings").textContent = `Ringe: ${state.build.rings}`;
+    document.getElementById("cElectrons").textContent = `Elektronen: ${eNow}`;
+  }
+
+  function drawAtom() {
+    const canvas = document.getElementById("atomCanvas");
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width;
+    const H = canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
+
+    ctx.clearRect(0, 0, W, H);
+
+    const rings = state.build.rings;
+    const coreR = 34;
+    const ringStep = rings > 0 ? Math.min(38, (W / 2 - coreR - 18) / rings) : 0;
+
+    for (let i = 0; i < rings; i++) {
+      const r = coreR + (i + 1) * ringStep;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = `${RING_COLORS[i]}66`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      ctx.font = "11px Trebuchet MS";
+      ctx.fillStyle = RING_COLORS[i];
+      ctx.fillText(`${SHELL_NAMES[i]} (${state.build.electronsPerRing[i] || 0}/${SHELL_CAPACITY[i]})`, cx + r + 4, cy - 4);
+    }
+
+    const p = state.build.protons;
+    const n = state.build.neutrons;
+    const particles = [];
+    for (let i = 0; i < p; i++) particles.push({ color: "var(--p)", txt: "p+" });
+    for (let i = 0; i < n; i++) particles.push({ color: "var(--n)", txt: "n" });
+
+    for (let i = 0; i < particles.length; i++) {
+      const a = (i * 137.5) * Math.PI / 180;
+      const r = Math.min(coreR - 8, 6 + Math.sqrt(i) * 4.2);
+      const x = cx + Math.cos(a) * r;
+      const y = cy + Math.sin(a) * r;
+      ctx.beginPath();
+      ctx.arc(x, y, 5.2, 0, Math.PI * 2);
+      ctx.fillStyle = particles[i].txt === "p+" ? "#fb7185" : "#94a3b8";
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+    ctx.strokeStyle = "#fca5a555";
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+
+    for (let i = 0; i < rings; i++) {
+      const count = state.build.electronsPerRing[i] || 0;
+      if (count <= 0) continue;
+      const rr = coreR + (i + 1) * ringStep;
+      for (let e = 0; e < count; e++) {
+        const angle = (2 * Math.PI / count) * e;
+        const x = cx + Math.cos(angle) * rr;
+        const y = cy + Math.sin(angle) * rr;
+        ctx.beginPath();
+        ctx.arc(x, y, 4.2, 0, Math.PI * 2);
+        ctx.fillStyle = RING_COLORS[i];
+        ctx.fill();
+      }
+    }
+
+    ctx.fillStyle = "#e5e7eb";
+    ctx.font = "bold 12px Trebuchet MS";
+    ctx.fillText(`Kern: p+ ${p} | n ${n}`, 12, 24);
+  }
+
+  document.getElementById("btnCheck").addEventListener("click", checkInputs);
+  document.getElementById("btnResetBuild").addEventListener("click", () => {
+    resetBuild();
+    drawAtom();
+    setStatus("Modell geleert.");
+  });
+  document.getElementById("btnHint").addEventListener("click", showHint);
+
+  document.getElementById("btnAddRing").addEventListener("click", addRing);
+  document.getElementById("btnAddProton").addEventListener("click", addProton);
+  document.getElementById("btnAddNeutron").addEventListener("click", addNeutron);
+  document.getElementById("btnAddElectron").addEventListener("click", addElectron);
+  document.getElementById("btnAutoFill").addEventListener("click", autoFillToInputTargets);
+
+  buildPSE();
+  drawAtom();
+</script>
+</body>
+</html>
