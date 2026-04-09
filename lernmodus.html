@@ -414,6 +414,11 @@
     font-size: .8rem;
     color: var(--muted);
   }
+  #score-round {
+    margin-top: 4px;
+    font-size: .78rem;
+    color: #cbd5e1;
+  }
 
   .atom {
     display: grid;
@@ -501,6 +506,11 @@
           <span class="community-label" id="vis-title">Besucherzaehler</span>
           <span class="community-value" id="vis-count">...</span>
         </div>
+        <div class="community-row">
+          <span class="community-label" id="score-title">Punktestand</span>
+          <span class="community-value" id="score-total">0.0</span>
+        </div>
+        <div id="score-round">Ohne Hilfe: 1.0 Punkt, mit Hilfe: 0.5 Punkte</div>
         <div class="community-row">
           <span class="community-label" id="rate-title">Bewertung Lernmodus</span>
           <span class="community-value" id="rate-summary">-</span>
@@ -605,6 +615,12 @@
       rateSummaryEmpty: "Noch keine",
       rateChoose: "Bitte zuerst 1 bis 5 waehlen.",
       rateThanks: "Danke! Deine Bewertung wurde gespeichert.",
+      scoreTitle: "Punktestand",
+      scoreRules: "Ohne Hilfe: 1.0 Punkt, mit Hilfe: 0.5 Punkte",
+      scoreRoundHelpUsed: "Hilfe genutzt: Bei Abschluss gibt es 0.5 Punkte.",
+      scoreRoundNoHelp: "Keine Hilfe genutzt: Bei Abschluss gibt es 1.0 Punkt.",
+      scoreAwarded: "Geschafft! +{points} Punkte. Gesamt: {total}",
+      scoreAlreadyAwarded: "Dieses Element wurde bereits gewertet.",
       selectedMsg: "Element gewaehlt: {name} ({sym}). Jetzt Werte aus dem PSE ablesen und eintragen.",
       mustSelect: "Bitte zuerst ein Element im PSE auswaehlen.",
       helpZ: "Ordnungszahl findest du links oben im Feld von {name}: {z}.",
@@ -655,6 +671,12 @@
       rateSummaryEmpty: "No ratings yet",
       rateChoose: "Please choose a rating from 1 to 5 first.",
       rateThanks: "Thanks! Your rating was saved.",
+      scoreTitle: "Score",
+      scoreRules: "Without help: 1.0 point, with help: 0.5 points",
+      scoreRoundHelpUsed: "Help used: completion gives 0.5 points.",
+      scoreRoundNoHelp: "No help used: completion gives 1.0 point.",
+      scoreAwarded: "Great! +{points} points. Total: {total}",
+      scoreAlreadyAwarded: "This element has already been scored.",
       selectedMsg: "Selected element: {name} ({sym}). Now read values from the periodic table and enter them.",
       mustSelect: "Please select an element in the periodic table first.",
       helpZ: "Atomic number is at the top-left of {name}: {z}.",
@@ -692,10 +714,14 @@
     helpTimer: null,
     selectedRating: 0,
     visitorCount: null,
-    visitorScope: "local"
+    visitorScope: "local",
+    helpUsedInRound: false,
+    roundAwarded: false,
+    scoreTotal: 0
   };
 
   const RATING_KEY = "elements_lernmodus_rating";
+  const SCORE_KEY = "elements_lernmodus_score_total";
 
   function setLanguage(lang) {
     currentLang = lang === "en" ? "en" : "de";
@@ -744,10 +770,13 @@
     });
 
     document.getElementById("vis-title").textContent = tr("visTitle");
+    document.getElementById("score-title").textContent = tr("scoreTitle");
+    document.getElementById("score-round").textContent = state.helpUsedInRound ? tr("scoreRoundHelpUsed") : tr("scoreRoundNoHelp");
     document.getElementById("rate-title").textContent = tr("rateTitle");
     document.getElementById("btnRate").textContent = tr("rateButton");
 
     updateVisitorDisplay();
+    updateScoreDisplay();
     updateRatingSummary();
 
     updateCountChips();
@@ -763,6 +792,19 @@
       });
       document.getElementById("taskText").textContent = tr("taskSelected", { name: el.name });
     }
+  }
+
+  function initScoreStore() {
+    const raw = Number(localStorage.getItem(SCORE_KEY) || "0");
+    state.scoreTotal = Number.isFinite(raw) ? raw : 0;
+  }
+
+  function saveScoreStore() {
+    localStorage.setItem(SCORE_KEY, String(state.scoreTotal));
+  }
+
+  function updateScoreDisplay() {
+    document.getElementById("score-total").textContent = state.scoreTotal.toFixed(1);
   }
 
   function updateVisitorDisplay() {
@@ -906,12 +948,15 @@
     if (now) now.classList.add("active");
 
     state.selected = el;
+    state.helpUsedInRound = false;
+    state.roundAwarded = false;
     resetBuild();
     const hg = getMainGroup(el.group);
     document.getElementById("pse-meta").textContent =
       tr("metaLine", { name: el.name, sym: el.sym, period: el.period, group: hg === null ? '-' : hg, mass: Math.round(el.mass) });
     setStatus(tr("selectedMsg", { name: el.name, sym: el.sym }));
     document.getElementById("taskText").textContent = tr("taskSelected", { name: el.name });
+    document.getElementById("score-round").textContent = tr("scoreRoundNoHelp");
     drawAtom();
   }
 
@@ -974,6 +1019,11 @@
     const el = state.selected;
     const exp = getExpected(el);
     const tile = document.querySelector(`.el[data-z='${el.z}']`);
+
+    if (!state.helpUsedInRound) {
+      state.helpUsedInRound = true;
+      document.getElementById("score-round").textContent = tr("scoreRoundHelpUsed");
+    }
 
     if (!tile) return;
 
@@ -1178,7 +1228,16 @@
       state.build.rings === t.rings &&
       eNow === t.electrons
     ) {
-      setStatus("Atommodell komplett nach deinen Angaben aufgebaut.", "ok");
+      if (state.roundAwarded) {
+        setStatus(tr("scoreAlreadyAwarded"), "ok");
+        return;
+      }
+      const points = state.helpUsedInRound ? 0.5 : 1.0;
+      state.scoreTotal = Math.round((state.scoreTotal + points) * 10) / 10;
+      saveScoreStore();
+      updateScoreDisplay();
+      state.roundAwarded = true;
+      setStatus(tr("scoreAwarded", { points: points.toFixed(1), total: state.scoreTotal.toFixed(1) }), "ok");
     }
   }
 
@@ -1325,6 +1384,7 @@
   document.getElementById("lang-en").addEventListener("click", () => setLanguage("en"));
 
   buildPSE();
+  initScoreStore();
   updateRatingSummary();
   initVisitorCounter();
   setLanguage(currentLang);
