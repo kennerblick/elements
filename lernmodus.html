@@ -84,7 +84,7 @@
     max-width: 1200px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1.1fr 0.9fr;
     gap: 16px;
   }
   .panel {
@@ -214,12 +214,12 @@
   }
 
   .right-grid {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto auto;
     gap: 12px;
   }
-  .panel.atom {
-    order: -1;
+  .atom-wide {
+    grid-column: 1;
   }
 
   .taskline {
@@ -448,6 +448,7 @@
   @media (max-width: 980px) {
     .layout { grid-template-columns: 1fr; }
     .cards { grid-template-columns: 1fr 1fr; }
+    .atom-wide { grid-column: auto; }
   }
   @media (max-width: 560px) {
     .pse-layout { padding-left: 20px; padding-top: 18px; }
@@ -552,16 +553,17 @@
         <div id="status" class="status"></div>
       </div>
 
-      <div class="panel atom">
-        <canvas id="atomCanvas" width="560" height="560"></canvas>
-        <div class="counts">
-          <span id="cProtons">Protonen: 0</span>
-          <span id="cNeutrons">Neutronen: 0</span>
-          <span id="cRings">Ringe: 0</span>
-          <span id="cElectrons">Elektronen: 0</span>
-        </div>
-      </div>
     </section>
+
+    <div class="panel atom atom-wide">
+      <canvas id="atomCanvas" width="560" height="560"></canvas>
+      <div class="counts">
+        <span id="cProtons">Protonen: 0</span>
+        <span id="cNeutrons">Neutronen: 0</span>
+        <span id="cRings">Ringe: 0</span>
+        <span id="cElectrons">Elektronen: 0</span>
+      </div>
+    </div>
   </div>
   <div id="help-pointer">--&gt;</div>
   <div id="help-overlay" aria-live="polite">
