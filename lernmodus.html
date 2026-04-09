@@ -210,9 +210,59 @@
     flex-direction: column;
     gap: 5px;
   }
+  .label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
   .field label {
     font-size: .74rem;
     color: var(--muted);
+  }
+  .help-btn {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(125, 211, 252, 0.7);
+    background: rgba(14, 165, 233, 0.2);
+    color: #e0f2fe;
+    font-size: .66rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  .help-btn:hover {
+    background: rgba(14, 165, 233, 0.35);
+    border-color: rgba(125, 211, 252, 0.95);
+  }
+  .help-target {
+    position: relative;
+    z-index: 3;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.18);
+    border-radius: 6px;
+  }
+  .help-pulse {
+    animation: helpPulse 0.95s ease 2;
+  }
+  #help-pointer {
+    position: fixed;
+    z-index: 20;
+    color: #fef3c7;
+    font-size: 1rem;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(251,191,36,.65);
+    pointer-events: none;
+    display: none;
+  }
+  @keyframes helpPulse {
+    0% { box-shadow: 0 0 0 0 rgba(251,191,36,.85); }
+    70% { box-shadow: 0 0 0 8px rgba(251,191,36,0); }
+    100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); }
   }
   .field input {
     width: 100%;
@@ -330,14 +380,14 @@
 
       <div class="panel">
         <div class="cards">
-          <div class="field"><label>Ordnungszahl (Z)</label><input id="inZ" type="number" min="1"></div>
-          <div class="field"><label>Masse (gerundet)</label><input id="inMass" type="number" min="1"></div>
-          <div class="field"><label>Periode</label><input id="inPeriod" type="number" min="1" max="7"></div>
-          <div class="field"><label>Hauptgruppe (1-8)</label><input id="inMainGroup" type="number" min="1" max="8"></div>
-          <div class="field"><label>Protonen</label><input id="inProtons" type="number" min="0"></div>
-          <div class="field"><label>Neutronen</label><input id="inNeutrons" type="number" min="0"></div>
-          <div class="field"><label>Elektronen gesamt</label><input id="inElectrons" type="number" min="0"></div>
-          <div class="field"><label>Valenzelektronen</label><input id="inValence" type="number" min="0" max="8"></div>
+          <div class="field"><div class="label-row"><label>Ordnungszahl (Z)</label><button class="help-btn" data-help="z" title="Nothilfe">?</button></div><input id="inZ" type="number" min="1"></div>
+          <div class="field"><div class="label-row"><label>Masse (gerundet)</label><button class="help-btn" data-help="mass" title="Nothilfe">?</button></div><input id="inMass" type="number" min="1"></div>
+          <div class="field"><div class="label-row"><label>Periode</label><button class="help-btn" data-help="period" title="Nothilfe">?</button></div><input id="inPeriod" type="number" min="1" max="7"></div>
+          <div class="field"><div class="label-row"><label>Hauptgruppe (1-8)</label><button class="help-btn" data-help="group" title="Nothilfe">?</button></div><input id="inMainGroup" type="number" min="1" max="8"></div>
+          <div class="field"><div class="label-row"><label>Protonen</label><button class="help-btn" data-help="protons" title="Nothilfe">?</button></div><input id="inProtons" type="number" min="0"></div>
+          <div class="field"><div class="label-row"><label>Neutronen</label><button class="help-btn" data-help="neutrons" title="Nothilfe">?</button></div><input id="inNeutrons" type="number" min="0"></div>
+          <div class="field"><div class="label-row"><label>Elektronen gesamt</label><button class="help-btn" data-help="electrons" title="Nothilfe">?</button></div><input id="inElectrons" type="number" min="0"></div>
+          <div class="field"><div class="label-row"><label>Valenzelektronen</label><button class="help-btn" data-help="valence" title="Nothilfe">?</button></div><input id="inValence" type="number" min="0" max="8"></div>
         </div>
         <div class="btn-row">
           <button class="primary" id="btnCheck">Eingaben pruefen</button>
@@ -365,6 +415,7 @@
       </div>
     </section>
   </div>
+  <div id="help-pointer">--&gt;</div>
 
 <script src="elements-data.js"></script>
 <script>
@@ -467,6 +518,97 @@
     const s = document.getElementById("status");
     s.textContent = msg;
     s.className = `status ${kind}`.trim();
+  }
+
+  function clearHelpEffects() {
+    document.querySelectorAll(".help-target").forEach(el => {
+      el.classList.remove("help-target", "help-pulse");
+    });
+    const pointer = document.getElementById("help-pointer");
+    pointer.style.display = "none";
+  }
+
+  function pointToElement(target) {
+    if (!target) return;
+    clearHelpEffects();
+    target.classList.add("help-target", "help-pulse");
+
+    const rect = target.getBoundingClientRect();
+    const pointer = document.getElementById("help-pointer");
+    pointer.style.left = `${Math.max(8, rect.left - 34)}px`;
+    pointer.style.top = `${rect.top + rect.height / 2 - 8}px`;
+    pointer.style.display = "block";
+
+    window.setTimeout(() => {
+      clearHelpEffects();
+    }, 1700);
+  }
+
+  function showInputHelp(type) {
+    if (!state.selected) {
+      setStatus("Bitte zuerst ein Element im PSE auswaehlen.", "bad");
+      return;
+    }
+
+    const el = state.selected;
+    const exp = getExpected(el);
+    const tile = document.querySelector(`.el[data-z='${el.z}']`);
+
+    if (!tile) return;
+
+    if (type === "z") {
+      pointToElement(tile.querySelector(".z"));
+      setStatus(`Ordnungszahl findest du links oben im Feld von ${el.name}: ${exp.z}.`, "ok");
+      return;
+    }
+    if (type === "mass") {
+      pointToElement(tile.querySelector(".mass"));
+      setStatus(`Atommasse steht rechts oben im Feld: ${exp.mass}.`, "ok");
+      return;
+    }
+    if (type === "period") {
+      const periodLabel = document.querySelector(`#period-labels span:nth-child(${el.period})`);
+      pointToElement(periodLabel);
+      setStatus(`Periode ist die Zeile links. Fuer ${el.name}: Periode ${exp.period}.`, "ok");
+      return;
+    }
+    if (type === "group") {
+      if (exp.mainGroup === null) {
+        setStatus("Dieses Element gehoert nicht zu einer klassischen Hauptgruppe.", "bad");
+        return;
+      }
+      const groupIndex = GROUP_LABELS.indexOf(String(exp.mainGroup));
+      const groupLabel = groupIndex >= 0 ? document.querySelector(`#group-labels span:nth-child(${groupIndex + 1})`) : null;
+      pointToElement(groupLabel);
+      setStatus(`Hauptgruppe steht oben in der Beschriftung: ${exp.mainGroup}.`, "ok");
+      return;
+    }
+    if (type === "protons") {
+      pointToElement(tile.querySelector(".z"));
+      setStatus(`Protonen = Ordnungszahl. Also: ${exp.protons} Protonen.`, "ok");
+      return;
+    }
+    if (type === "neutrons") {
+      pointToElement(tile.querySelector(".mass"));
+      setStatus(`Neutronen-Rechnung: Masse - Protonen = ${exp.mass} - ${exp.protons} = ${exp.neutrons}.`, "ok");
+      return;
+    }
+    if (type === "electrons") {
+      pointToElement(tile.querySelector(".z"));
+      setStatus(`Bei neutralem Atom gilt: Elektronen = Ordnungszahl = ${exp.electrons}.`, "ok");
+      return;
+    }
+    if (type === "valence") {
+      if (exp.mainGroup === null || exp.valence === null) {
+        setStatus("Valenzelektronen sind hier im vereinfachten Modell nicht eindeutig.", "bad");
+        return;
+      }
+      const groupIndex = GROUP_LABELS.indexOf(String(exp.mainGroup));
+      const groupLabel = groupIndex >= 0 ? document.querySelector(`#group-labels span:nth-child(${groupIndex + 1})`) : null;
+      pointToElement(groupLabel);
+      setStatus(`Im Lernmodell gilt: Valenzelektronen entsprechen der Hauptgruppe (${exp.mainGroup}) -> ${exp.valence}.`, "ok");
+      return;
+    }
   }
 
   function checkInputs() {
@@ -735,6 +877,9 @@
   document.getElementById("btnAddNeutron").addEventListener("click", addNeutron);
   document.getElementById("btnAddElectron").addEventListener("click", addElectron);
   document.getElementById("btnAutoFill").addEventListener("click", autoFillToInputTargets);
+  document.querySelectorAll(".help-btn").forEach(btn => {
+    btn.addEventListener("click", () => showInputHelp(btn.dataset.help));
+  });
 
   buildPSE();
   drawAtom();
