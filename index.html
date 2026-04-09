@@ -32,6 +32,32 @@
     min-height: 100vh;
     padding: 12px;
   }
+  .lang-switch {
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    z-index: 30;
+    display: inline-flex;
+    gap: 4px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid #334155;
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .lang-btn {
+    border: 0;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    background: transparent;
+    cursor: pointer;
+  }
+  .lang-btn.active {
+    color: #0f172a;
+    background: linear-gradient(110deg,#38bdf8,#f59e0b);
+  }
   h1 {
     text-align: center;
     font-size: 1.4rem;
@@ -303,9 +329,14 @@
 </head>
 <body>
 
-<h1>Periodensystem & Atommodell</h1>
+<div class="lang-switch" aria-label="Language switch">
+  <button class="lang-btn" id="lang-de" type="button">DE</button>
+  <button class="lang-btn" id="lang-en" type="button">EN</button>
+</div>
+
+<h1 id="page-title">Periodensystem & Atommodell</h1>
 <div style="text-align:center;margin-bottom:10px">
-  <a href="lernmodus.html" style="display:inline-block;padding:8px 14px;border-radius:999px;background:linear-gradient(110deg,#38bdf8,#f59e0b);color:#0f172a;text-decoration:none;font-weight:700">Variante 2: Lernmodus (selbst aufbauen)</a>
+  <a id="mode-link" href="lernmodus.html" style="display:inline-block;padding:8px 14px;border-radius:999px;background:linear-gradient(110deg,#38bdf8,#f59e0b);color:#0f172a;text-decoration:none;font-weight:700">Variante 2: Lernmodus (selbst aufbauen)</a>
 </div>
 
 <!-- Legende -->
@@ -349,6 +380,72 @@
 </div>
 
 <script>
+const I18N = {
+  de: {
+    pageTitle: 'Periodensystem & Atommodell',
+    modeLink: 'Variante 2: Lernmodus (selbst aufbauen)',
+    metaDefault: 'PSE-Daten: Klicke ein Element an, um Periode, Hauptgruppe und Atommasse zu sehen.',
+    metaLine: '{name} ({sym}) · Periode: {period} · Hauptgruppe: {group} · Atommasse: {mass}',
+    infoHeader: 'Element-Info',
+    infoStart: 'Wähle ein Element aus dem Periodensystem, um hier alle Details zu sehen.',
+    atomHint: 'Klick ein Element im Periodensystem an!',
+    atomTitle: 'Atommodell',
+    periodLabel: 'Periode',
+    mainGroupLabel: 'Hauptgruppe',
+    massLabel: 'Atommasse'
+  },
+  en: {
+    pageTitle: 'Periodic Table & Atomic Model',
+    modeLink: 'Variant 2: Learning mode (build it yourself)',
+    metaDefault: 'PTE data: click an element to see period, main group and atomic mass.',
+    metaLine: '{name} ({sym}) · Period: {period} · Main group: {group} · Atomic mass: {mass}',
+    infoHeader: 'Element Info',
+    infoStart: 'Select an element in the periodic table to see all details here.',
+    atomHint: 'Click an element in the periodic table!',
+    atomTitle: 'Atomic model',
+    periodLabel: 'Period',
+    mainGroupLabel: 'Main group',
+    massLabel: 'Atomic mass'
+  }
+};
+
+let currentLang = localStorage.getItem('elements_lang') || 'de';
+
+function tr(key, vars = {}) {
+  const map = I18N[currentLang] || I18N.de;
+  let out = map[key] || key;
+  Object.keys(vars).forEach(k => {
+    out = out.replace(`{${k}}`, String(vars[k]));
+  });
+  return out;
+}
+
+function setLanguage(lang) {
+  currentLang = lang === 'en' ? 'en' : 'de';
+  localStorage.setItem('elements_lang', currentLang);
+  document.documentElement.lang = currentLang;
+  document.getElementById('lang-de').classList.toggle('active', currentLang === 'de');
+  document.getElementById('lang-en').classList.toggle('active', currentLang === 'en');
+  applyLanguage();
+}
+
+function applyLanguage() {
+  document.title = tr('pageTitle');
+  document.getElementById('page-title').textContent = tr('pageTitle');
+  document.getElementById('mode-link').textContent = tr('modeLink');
+
+  if (!selectedEl) {
+    document.getElementById('pse-meta').textContent = tr('metaDefault');
+    document.getElementById('info-header').textContent = tr('infoHeader');
+    document.getElementById('info-content').textContent = tr('infoStart');
+    document.getElementById('atom-title').textContent = tr('atomTitle');
+    document.getElementById('atom-hint').textContent = tr('atomHint');
+  } else {
+    renderPseMeta(selectedEl);
+    renderInfo(selectedEl);
+  }
+}
+
 // ============================================================
 // Elementdaten: Z, Symbol, Name, Masse, Gruppe, Periode, Kat
 // Spalte (col) und Zeile (row) im PSE-Grid (1-basiert)
@@ -547,7 +644,13 @@ function buildPSE() {
 function renderPseMeta(el) {
   const hg = getMainGroup(el.group);
   document.getElementById('pse-meta').textContent =
-    `${el.name} (${el.sym}) · Periode: ${el.period} · Hauptgruppe: ${hg === null ? '-' : hg} · Atommasse: ${Math.round(el.mass)}`;
+    tr('metaLine', {
+      name: el.name,
+      sym: el.sym,
+      period: el.period,
+      group: hg === null ? '-' : hg,
+      mass: Math.round(el.mass)
+    });
 }
 
 // ===== Element auswählen =====
@@ -755,6 +858,9 @@ function startAtomAnimation(el) {
 
 // ===== Init =====
 buildPSE();
+document.getElementById('lang-de').addEventListener('click', () => setLanguage('de'));
+document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
+setLanguage(currentLang);
 </script>
 </body>
 </html>

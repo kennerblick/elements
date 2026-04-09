@@ -32,6 +32,32 @@
     min-height: 100vh;
     padding: 18px;
   }
+  .lang-switch {
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    z-index: 40;
+    display: inline-flex;
+    gap: 4px;
+    background: rgba(7, 16, 38, 0.88);
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .lang-btn {
+    border: 0;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    background: transparent;
+    cursor: pointer;
+  }
+  .lang-btn.active {
+    color: #071026;
+    background: linear-gradient(110deg, #7dd3fc, #fbbf24);
+  }
   .topbar {
     max-width: 1200px;
     margin: 0 auto 14px;
@@ -381,9 +407,13 @@
 </style>
 </head>
 <body>
+  <div class="lang-switch" aria-label="Language switch">
+    <button class="lang-btn" id="lang-de" type="button">DE</button>
+    <button class="lang-btn" id="lang-en" type="button">EN</button>
+  </div>
   <div class="topbar">
-    <h1>Lernmodus: Atommodell selbst aufbauen</h1>
-    <a class="mode-link" href="index.html">Variante 1: Automatisch</a>
+    <h1 id="page-title">Lernmodus: Atommodell selbst aufbauen</h1>
+    <a class="mode-link" id="mode-link" href="index.html">Variante 1: Automatisch</a>
   </div>
 
   <div class="layout">
@@ -467,6 +497,101 @@
   const SHELL_NAMES = ["K", "L", "M", "N", "O", "P", "Q"];
   const RING_COLORS = ["#fde68a", "#a5f3fc", "#c4b5fd", "#fca5a5", "#86efac", "#fdba74", "#f9a8d4"];
   const GROUP_LABELS = ["1", "2", "", "", "", "", "", "", "", "", "", "", "3", "4", "5", "6", "7", "8"];
+  const I18N = {
+    de: {
+      title: "Lernmodus: Atommodell selbst aufbauen",
+      modeLink: "Variante 1: Automatisch",
+      metaDefault: "PSE-Daten: Waehle ein Element, dann werden Periode, Hauptgruppe und Atommasse hier gezeigt.",
+      metaLine: "{name} ({sym}) · Periode: {period} · Hauptgruppe: {group} · Atommasse: {mass}",
+      taskStart: "1) Waehle ein Element im PSE. 2) Lies Hauptgruppe, Periode, Ordnungszahl und Masse selbst ab. 3) Trage die Werte ein und pruefe sie. 4) Setze Protonen, Neutronen, Ringe und Elektronen einzeln.",
+      taskSelected: "Aufgabe: Baue {name}. Lies Z, Periode, Hauptgruppe und Masse im PSE ab. Dann berechne Neutronen mit Masse - Protonen.",
+      helpTitle: "Nothilfe",
+      lblZ: "Ordnungszahl (Z)",
+      lblMass: "Masse (gerundet)",
+      lblPeriod: "Periode",
+      lblGroup: "Hauptgruppe (1-8)",
+      lblProtons: "Protonen",
+      lblNeutrons: "Neutronen",
+      lblElectrons: "Elektronen gesamt",
+      lblValence: "Valenzelektronen",
+      btnCheck: "Eingaben pruefen",
+      btnReset: "Modell leeren",
+      btnHint: "Hinweis zeigen",
+      btnAddRing: "+ 1 Ring setzen",
+      btnAddProton: "+ 1 Proton setzen",
+      btnAddNeutron: "+ 1 Neutron setzen",
+      btnAddElectron: "+ 1 Elektron setzen",
+      btnAutoFill: "Testen: bis Ziel auffuellen",
+      countProtons: "Protonen",
+      countNeutrons: "Neutronen",
+      countRings: "Ringe",
+      countElectrons: "Elektronen",
+      selectedMsg: "Element gewaehlt: {name} ({sym}). Jetzt Werte aus dem PSE ablesen und eintragen.",
+      mustSelect: "Bitte zuerst ein Element im PSE auswaehlen.",
+      helpZ: "Ordnungszahl findest du links oben im Feld von {name}: {z}.",
+      helpMass: "Atommasse steht rechts oben im Feld: {mass}.",
+      helpPeriod: "Periode ist die Zeile links. Fuer {name}: Periode {period}.",
+      helpGroup: "Hauptgruppe steht oben in der Beschriftung: {group}.",
+      helpProtons: "Protonen = Ordnungszahl. Also: {protons} Protonen.",
+      helpNeutrons: "Neutronen-Rechnung: Masse - Protonen = {mass} - {protons} = {neutrons}.",
+      helpElectrons: "Bei neutralem Atom gilt: Elektronen = Ordnungszahl = {electrons}.",
+      helpValence: "Im Lernmodell gilt: Valenzelektronen entsprechen der Hauptgruppe ({group}) -> {valence}.",
+      noMainGroup: "Dieses Element gehoert nicht zu einer klassischen Hauptgruppe.",
+      valenceNotClear: "Valenzelektronen sind hier im vereinfachten Modell nicht eindeutig."
+    },
+    en: {
+      title: "Learning mode: build the atomic model yourself",
+      modeLink: "Variant 1: Automatic",
+      metaDefault: "PTE data: choose an element to display period, main group and atomic mass.",
+      metaLine: "{name} ({sym}) · Period: {period} · Main group: {group} · Atomic mass: {mass}",
+      taskStart: "1) Choose an element in the periodic table. 2) Read main group, period, atomic number and mass. 3) Enter values and check them. 4) Place protons, neutrons, shells and electrons one by one.",
+      taskSelected: "Task: Build {name}. Read Z, period, main group and mass in the table. Then calculate neutrons with mass - protons.",
+      helpTitle: "Quick help",
+      lblZ: "Atomic number (Z)",
+      lblMass: "Mass (rounded)",
+      lblPeriod: "Period",
+      lblGroup: "Main group (1-8)",
+      lblProtons: "Protons",
+      lblNeutrons: "Neutrons",
+      lblElectrons: "Electrons total",
+      lblValence: "Valence electrons",
+      btnCheck: "Check inputs",
+      btnReset: "Clear model",
+      btnHint: "Show hint",
+      btnAddRing: "+ add 1 shell",
+      btnAddProton: "+ add 1 proton",
+      btnAddNeutron: "+ add 1 neutron",
+      btnAddElectron: "+ add 1 electron",
+      btnAutoFill: "Test: fill to target",
+      countProtons: "Protons",
+      countNeutrons: "Neutrons",
+      countRings: "Shells",
+      countElectrons: "Electrons",
+      selectedMsg: "Selected element: {name} ({sym}). Now read values from the periodic table and enter them.",
+      mustSelect: "Please select an element in the periodic table first.",
+      helpZ: "Atomic number is at the top-left of {name}: {z}.",
+      helpMass: "Atomic mass is at the top-right: {mass}.",
+      helpPeriod: "Period is the row label on the left. For {name}: period {period}.",
+      helpGroup: "Main group is shown in the top labels: {group}.",
+      helpProtons: "Protons = atomic number. So: {protons} protons.",
+      helpNeutrons: "Neutron formula: mass - protons = {mass} - {protons} = {neutrons}.",
+      helpElectrons: "For a neutral atom: electrons = atomic number = {electrons}.",
+      helpValence: "In this learning model: valence electrons match main group ({group}) -> {valence}.",
+      noMainGroup: "This element is not part of a classic main group.",
+      valenceNotClear: "Valence electrons are not uniquely defined here in the simplified model."
+    }
+  };
+
+  let currentLang = localStorage.getItem("elements_lang") || "de";
+
+  function tr(key, vars = {}) {
+    const map = I18N[currentLang] || I18N.de;
+    let out = map[key] || key;
+    Object.keys(vars).forEach(k => {
+      out = out.replace(`{${k}}`, String(vars[k]));
+    });
+    return out;
+  }
 
   const state = {
     selected: null,
@@ -478,6 +603,67 @@
     },
     helpTimer: null
   };
+
+  function setLanguage(lang) {
+    currentLang = lang === "en" ? "en" : "de";
+    localStorage.setItem("elements_lang", currentLang);
+    document.documentElement.lang = currentLang;
+    document.getElementById("lang-de").classList.toggle("active", currentLang === "de");
+    document.getElementById("lang-en").classList.toggle("active", currentLang === "en");
+    applyLanguage();
+  }
+
+  function setFieldLabel(inputId, text) {
+    const label = document.getElementById(inputId).closest(".field").querySelector("label");
+    if (label) label.textContent = text;
+  }
+
+  function applyLanguage() {
+    document.title = tr("title");
+    document.getElementById("page-title").textContent = tr("title");
+    document.getElementById("mode-link").textContent = tr("modeLink");
+    document.getElementById("pse-meta").textContent = state.selected ? document.getElementById("pse-meta").textContent : tr("metaDefault");
+    if (!state.selected) {
+      document.getElementById("taskText").textContent = tr("taskStart");
+    }
+    document.getElementById("help-overlay-title").textContent = tr("helpTitle");
+
+    setFieldLabel("inZ", tr("lblZ"));
+    setFieldLabel("inMass", tr("lblMass"));
+    setFieldLabel("inPeriod", tr("lblPeriod"));
+    setFieldLabel("inMainGroup", tr("lblGroup"));
+    setFieldLabel("inProtons", tr("lblProtons"));
+    setFieldLabel("inNeutrons", tr("lblNeutrons"));
+    setFieldLabel("inElectrons", tr("lblElectrons"));
+    setFieldLabel("inValence", tr("lblValence"));
+
+    document.getElementById("btnCheck").textContent = tr("btnCheck");
+    document.getElementById("btnResetBuild").textContent = tr("btnReset");
+    document.getElementById("btnHint").textContent = tr("btnHint");
+    document.getElementById("btnAddRing").textContent = tr("btnAddRing");
+    document.getElementById("btnAddProton").textContent = tr("btnAddProton");
+    document.getElementById("btnAddNeutron").textContent = tr("btnAddNeutron");
+    document.getElementById("btnAddElectron").textContent = tr("btnAddElectron");
+    document.getElementById("btnAutoFill").textContent = tr("btnAutoFill");
+
+    document.querySelectorAll(".help-btn").forEach(btn => {
+      btn.title = tr("helpTitle");
+    });
+
+    updateCountChips();
+    if (state.selected) {
+      const el = state.selected;
+      const hg = getMainGroup(el.group);
+      document.getElementById("pse-meta").textContent = tr("metaLine", {
+        name: el.name,
+        sym: el.sym,
+        period: el.period,
+        group: hg === null ? "-" : hg,
+        mass: Math.round(el.mass)
+      });
+      document.getElementById("taskText").textContent = tr("taskSelected", { name: el.name });
+    }
+  }
 
   function getMainGroup(group) {
     if (group === 1) return 1;
@@ -546,11 +732,9 @@
     resetBuild();
     const hg = getMainGroup(el.group);
     document.getElementById("pse-meta").textContent =
-      `${el.name} (${el.sym}) · Periode: ${el.period} · Hauptgruppe: ${hg === null ? '-' : hg} · Atommasse: ${Math.round(el.mass)}`;
-    setStatus(`Element gewaehlt: ${el.name} (${el.sym}). Jetzt Werte aus dem PSE ablesen und eintragen.`);
-    document.getElementById("taskText").textContent =
-      `Aufgabe: Baue ${el.name}. Lies Z, Periode, Hauptgruppe und Masse im PSE ab. ` +
-      `Dann berechne Neutronen mit Masse - Protonen.`;
+      tr("metaLine", { name: el.name, sym: el.sym, period: el.period, group: hg === null ? '-' : hg, mass: Math.round(el.mass) });
+    setStatus(tr("selectedMsg", { name: el.name, sym: el.sym }));
+    document.getElementById("taskText").textContent = tr("taskSelected", { name: el.name });
     drawAtom();
   }
 
@@ -606,7 +790,7 @@
 
   function showInputHelp(type) {
     if (!state.selected) {
-      setStatus("Bitte zuerst ein Element im PSE auswaehlen.", "bad");
+      setStatus(tr("mustSelect"), "bad");
       return;
     }
 
@@ -618,14 +802,14 @@
 
     if (type === "z") {
       pointToElement(tile.querySelector(".z"));
-      const text = `Ordnungszahl findest du links oben im Feld von ${el.name}: ${exp.z}.`;
+      const text = tr("helpZ", { name: el.name, z: exp.z });
       showCentralHelp(text);
       setStatus(text, "ok");
       return;
     }
     if (type === "mass") {
       pointToElement(tile.querySelector(".mass"));
-      const text = `Atommasse steht rechts oben im Feld: ${exp.mass}.`;
+      const text = tr("helpMass", { mass: exp.mass });
       showCentralHelp(text);
       setStatus(text, "ok");
       return;
@@ -633,54 +817,54 @@
     if (type === "period") {
       const periodLabel = document.querySelector(`#period-labels span:nth-child(${el.period})`);
       pointToElement(periodLabel);
-      const text = `Periode ist die Zeile links. Fuer ${el.name}: Periode ${exp.period}.`;
+      const text = tr("helpPeriod", { name: el.name, period: exp.period });
       showCentralHelp(text);
       setStatus(text, "ok");
       return;
     }
     if (type === "group") {
       if (exp.mainGroup === null) {
-        setStatus("Dieses Element gehoert nicht zu einer klassischen Hauptgruppe.", "bad");
+        setStatus(tr("noMainGroup"), "bad");
         return;
       }
       const groupIndex = GROUP_LABELS.indexOf(String(exp.mainGroup));
       const groupLabel = groupIndex >= 0 ? document.querySelector(`#group-labels span:nth-child(${groupIndex + 1})`) : null;
       pointToElement(groupLabel);
-      const text = `Hauptgruppe steht oben in der Beschriftung: ${exp.mainGroup}.`;
+      const text = tr("helpGroup", { group: exp.mainGroup });
       showCentralHelp(text);
       setStatus(text, "ok");
       return;
     }
     if (type === "protons") {
       pointToElement(tile.querySelector(".z"));
-      const text = `Protonen = Ordnungszahl. Also: ${exp.protons} Protonen.`;
+      const text = tr("helpProtons", { protons: exp.protons });
       showCentralHelp(text);
       setStatus(text, "ok");
       return;
     }
     if (type === "neutrons") {
       pointToElement(tile.querySelector(".mass"));
-      const text = `Neutronen-Rechnung: Masse - Protonen = ${exp.mass} - ${exp.protons} = ${exp.neutrons}.`;
+      const text = tr("helpNeutrons", { mass: exp.mass, protons: exp.protons, neutrons: exp.neutrons });
       showCentralHelp(text);
       setStatus(text, "ok");
       return;
     }
     if (type === "electrons") {
       pointToElement(tile.querySelector(".z"));
-      const text = `Bei neutralem Atom gilt: Elektronen = Ordnungszahl = ${exp.electrons}.`;
+      const text = tr("helpElectrons", { electrons: exp.electrons });
       showCentralHelp(text);
       setStatus(text, "ok");
       return;
     }
     if (type === "valence") {
       if (exp.mainGroup === null || exp.valence === null) {
-        setStatus("Valenzelektronen sind hier im vereinfachten Modell nicht eindeutig.", "bad");
+        setStatus(tr("valenceNotClear"), "bad");
         return;
       }
       const groupIndex = GROUP_LABELS.indexOf(String(exp.mainGroup));
       const groupLabel = groupIndex >= 0 ? document.querySelector(`#group-labels span:nth-child(${groupIndex + 1})`) : null;
       pointToElement(groupLabel);
-      const text = `Im Lernmodell gilt: Valenzelektronen entsprechen der Hauptgruppe (${exp.mainGroup}) -> ${exp.valence}.`;
+      const text = tr("helpValence", { group: exp.mainGroup, valence: exp.valence });
       showCentralHelp(text);
       setStatus(text, "ok");
       return;
@@ -864,10 +1048,10 @@
 
   function updateCountChips() {
     const eNow = state.build.electronsPerRing.reduce((a,b)=>a+b,0);
-    document.getElementById("cProtons").textContent = `Protonen: ${state.build.protons}`;
-    document.getElementById("cNeutrons").textContent = `Neutronen: ${state.build.neutrons}`;
-    document.getElementById("cRings").textContent = `Ringe: ${state.build.rings}`;
-    document.getElementById("cElectrons").textContent = `Elektronen: ${eNow}`;
+    document.getElementById("cProtons").textContent = `${tr("countProtons")}: ${state.build.protons}`;
+    document.getElementById("cNeutrons").textContent = `${tr("countNeutrons")}: ${state.build.neutrons}`;
+    document.getElementById("cRings").textContent = `${tr("countRings")}: ${state.build.rings}`;
+    document.getElementById("cElectrons").textContent = `${tr("countElectrons")}: ${eNow}`;
   }
 
   function drawAtom() {
@@ -956,8 +1140,11 @@
   document.querySelectorAll(".help-btn").forEach(btn => {
     btn.addEventListener("click", () => showInputHelp(btn.dataset.help));
   });
+  document.getElementById("lang-de").addEventListener("click", () => setLanguage("de"));
+  document.getElementById("lang-en").addEventListener("click", () => setLanguage("en"));
 
   buildPSE();
+  setLanguage(currentLang);
   drawAtom();
 </script>
 </body>
