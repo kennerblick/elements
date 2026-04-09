@@ -57,7 +57,7 @@
     left: 24px;
     top: 0;
     display: grid;
-    grid-template-columns: repeat(18, 42px);
+    grid-template-columns: repeat(18, 50px);
     gap: 2px;
   }
   #group-labels span {
@@ -71,7 +71,7 @@
     left: 0;
     top: 20px;
     display: grid;
-    grid-template-rows: repeat(7, 38px);
+    grid-template-rows: repeat(7, 46px);
     gap: 2px;
     width: 22px;
   }
@@ -95,15 +95,15 @@
   }
   #pse {
     display: grid;
-    grid-template-columns: repeat(18, 42px);
-    grid-template-rows: repeat(10, 38px);
+    grid-template-columns: repeat(18, 50px);
+    grid-template-rows: repeat(10, 46px);
     gap: 2px;
     width: max-content;
     margin: 0 auto;
   }
   .el {
-    width: 42px;
-    height: 38px;
+    width: 50px;
+    height: 46px;
     border-radius: 4px;
     cursor: pointer;
     display: flex;
@@ -122,15 +122,41 @@
     transform: scale(1.12);
     z-index: 10;
   }
-  .el .sym { font-size: 0.95rem; font-weight: 700; line-height: 1; }
-  .el .num { font-size: 0.5rem; color: rgba(255,255,255,0.7); line-height: 1; }
+  .el .sym {
+    position: absolute;
+    left: 50%;
+    top: 12px;
+    transform: translateX(-50%);
+    font-size: 0.84rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .el .num {
+    position: absolute;
+    left: 2px;
+    top: 1px;
+    font-size: 0.5rem;
+    color: rgba(255,255,255,0.78);
+    line-height: 1;
+  }
   .el .mass {
     position: absolute;
     right: 2px;
-    bottom: 1px;
+    top: 1px;
     font-size: 0.43rem;
     color: rgba(255,255,255,0.85);
     line-height: 1;
+  }
+  .el .name {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    text-align: center;
+    font-size: 0.34rem;
+    line-height: 0.92;
+    color: rgba(255,255,255,0.82);
+    word-break: break-word;
   }
 
   /* Kategoriefarben */
@@ -266,11 +292,12 @@
   @media (max-width: 720px) {
     #lower { grid-template-columns: 1fr; }
     .pse-layout { padding-left: 20px; padding-top: 18px; }
-    #group-labels { left: 20px; grid-template-columns: repeat(18, 36px); }
-    #period-labels { top: 18px; grid-template-rows: repeat(7, 32px); width: 18px; }
-    #pse { grid-template-columns: repeat(18, 36px); grid-template-rows: repeat(10, 32px); }
-    .el { width: 36px; height: 32px; }
-    .el .sym { font-size: 0.8rem; }
+    #group-labels { left: 20px; grid-template-columns: repeat(18, 42px); }
+    #period-labels { top: 18px; grid-template-rows: repeat(7, 38px); width: 18px; }
+    #pse { grid-template-columns: repeat(18, 42px); grid-template-rows: repeat(10, 38px); }
+    .el { width: 42px; height: 38px; }
+    .el .sym { top: 10px; font-size: 0.72rem; }
+    .el .name { font-size: 0.3rem; }
   }
 </style>
 </head>
@@ -458,6 +485,7 @@ const ELEMENTS = [
 const SHELL_CAPACITY = [2, 8, 8, 18, 18, 32, 32];
 const SHELL_NAMES    = ['K','L','M','N','O','P','Q'];
 const RING_COLORS    = ['#fde68a','#a5f3fc','#c4b5fd','#fca5a5','#86efac','#fdba74','#f9a8d4'];
+const GROUP_LABELS   = ['1','2','','','','','','','','','','','3','4','5','6','7','8'];
 
 // Elektronen je Ring für Atom Z (vereinfacht Bohrsches Modell für Hauptgruppen)
 function calcShells(z) {
@@ -489,9 +517,9 @@ function buildPSE() {
   const periods = document.getElementById('period-labels');
 
   groups.innerHTML = '';
-  for (let i = 1; i <= 18; i++) {
+  for (let i = 0; i < GROUP_LABELS.length; i++) {
     const label = document.createElement('span');
-    label.textContent = i;
+    label.textContent = GROUP_LABELS[i];
     groups.appendChild(label);
   }
 
@@ -506,7 +534,7 @@ function buildPSE() {
     const div = document.createElement('div');
     div.className = `el cat-${el.cat}`;
     div.dataset.z = el.z;
-    div.innerHTML = `<span class="num">${el.z}</span><span class="sym">${el.sym}</span><span class="mass">${Math.round(el.mass)}</span>`;
+    div.innerHTML = `<span class="num">${el.z}</span><span class="mass">${Math.round(el.mass)}</span><span class="sym">${el.sym}</span><span class="name">${el.name}</span>`;
     const hg = getMainGroup(el.group);
     div.title = `${el.name} (Z=${el.z}, Periode ${el.period}, Hauptgruppe ${hg === null ? '-' : hg}, Masse ${Math.round(el.mass)})`;
     div.style.gridColumn = el.col;
