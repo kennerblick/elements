@@ -31,6 +31,20 @@ Direkt im Browser oeffnen:
 
 Es ist kein Build-Schritt und kein Server erforderlich.
 
+### iPhone-Version (teilen per Link)
+
+Die App wird automatisch als GitHub Pages Seite veroeffentlicht:
+
+- https://kennerblick.github.io/elements/
+
+Auf dem iPhone in Safari oeffnen und dann:
+
+1. Teilen-Symbol antippen
+2. Zum Home-Bildschirm
+3. Namen festlegen, Hinzufuegen
+
+So kann dein Kind die App wie eine normale App starten.
+
 ---
 
 ## English
@@ -63,3 +77,17 @@ Open directly in a browser:
 - [lernmodus.html](lernmodus.html)
 
 No build step and no server required.
+
+### iPhone version (share via link)
+
+The app is automatically published as a GitHub Pages site:
+
+- https://kennerblick.github.io/elements/
+
+On iPhone, open it in Safari and then:
+
+1. Tap Share
+2. Add to Home Screen
+3. Set a name and tap Add
+
+This lets your child launch it like a regular app icon.
