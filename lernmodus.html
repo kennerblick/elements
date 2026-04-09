@@ -259,6 +259,44 @@
     pointer-events: none;
     display: none;
   }
+  #help-overlay {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(88vw, 560px);
+    z-index: 30;
+    display: none;
+    pointer-events: none;
+  }
+  #help-overlay.show {
+    display: block;
+    animation: helpOverlayIn .18s ease;
+  }
+  #help-overlay-card {
+    background: rgba(7, 16, 38, 0.95);
+    border: 1px solid rgba(125, 211, 252, 0.55);
+    box-shadow: 0 14px 35px rgba(2, 8, 23, 0.55);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: #e5f3ff;
+    text-align: center;
+    font-size: .95rem;
+    line-height: 1.45;
+    font-weight: 600;
+  }
+  #help-overlay-title {
+    display: block;
+    color: #7dd3fc;
+    font-size: .78rem;
+    letter-spacing: .4px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+  }
+  @keyframes helpOverlayIn {
+    from { opacity: 0; transform: translate(-50%, -46%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+  }
   @keyframes helpPulse {
     0% { box-shadow: 0 0 0 0 rgba(251,191,36,.85); }
     70% { box-shadow: 0 0 0 8px rgba(251,191,36,0); }
@@ -416,6 +454,12 @@
     </section>
   </div>
   <div id="help-pointer">--&gt;</div>
+  <div id="help-overlay" aria-live="polite">
+    <div id="help-overlay-card">
+      <span id="help-overlay-title">Nothilfe</span>
+      <span id="help-overlay-text"></span>
+    </div>
+  </div>
 
 <script src="elements-data.js"></script>
 <script>
@@ -431,7 +475,8 @@
       neutrons: 0,
       rings: 0,
       electronsPerRing: []
-    }
+    },
+    helpTimer: null
   };
 
   function getMainGroup(group) {
@@ -528,6 +573,21 @@
     pointer.style.display = "none";
   }
 
+  function showCentralHelp(text) {
+    const overlay = document.getElementById("help-overlay");
+    const txt = document.getElementById("help-overlay-text");
+    txt.textContent = text;
+    overlay.classList.add("show");
+
+    if (state.helpTimer) {
+      window.clearTimeout(state.helpTimer);
+    }
+    state.helpTimer = window.setTimeout(() => {
+      overlay.classList.remove("show");
+      state.helpTimer = null;
+    }, 2600);
+  }
+
   function pointToElement(target) {
     if (!target) return;
     clearHelpEffects();
@@ -558,18 +618,24 @@
 
     if (type === "z") {
       pointToElement(tile.querySelector(".z"));
-      setStatus(`Ordnungszahl findest du links oben im Feld von ${el.name}: ${exp.z}.`, "ok");
+      const text = `Ordnungszahl findest du links oben im Feld von ${el.name}: ${exp.z}.`;
+      showCentralHelp(text);
+      setStatus(text, "ok");
       return;
     }
     if (type === "mass") {
       pointToElement(tile.querySelector(".mass"));
-      setStatus(`Atommasse steht rechts oben im Feld: ${exp.mass}.`, "ok");
+      const text = `Atommasse steht rechts oben im Feld: ${exp.mass}.`;
+      showCentralHelp(text);
+      setStatus(text, "ok");
       return;
     }
     if (type === "period") {
       const periodLabel = document.querySelector(`#period-labels span:nth-child(${el.period})`);
       pointToElement(periodLabel);
-      setStatus(`Periode ist die Zeile links. Fuer ${el.name}: Periode ${exp.period}.`, "ok");
+      const text = `Periode ist die Zeile links. Fuer ${el.name}: Periode ${exp.period}.`;
+      showCentralHelp(text);
+      setStatus(text, "ok");
       return;
     }
     if (type === "group") {
@@ -580,22 +646,30 @@
       const groupIndex = GROUP_LABELS.indexOf(String(exp.mainGroup));
       const groupLabel = groupIndex >= 0 ? document.querySelector(`#group-labels span:nth-child(${groupIndex + 1})`) : null;
       pointToElement(groupLabel);
-      setStatus(`Hauptgruppe steht oben in der Beschriftung: ${exp.mainGroup}.`, "ok");
+      const text = `Hauptgruppe steht oben in der Beschriftung: ${exp.mainGroup}.`;
+      showCentralHelp(text);
+      setStatus(text, "ok");
       return;
     }
     if (type === "protons") {
       pointToElement(tile.querySelector(".z"));
-      setStatus(`Protonen = Ordnungszahl. Also: ${exp.protons} Protonen.`, "ok");
+      const text = `Protonen = Ordnungszahl. Also: ${exp.protons} Protonen.`;
+      showCentralHelp(text);
+      setStatus(text, "ok");
       return;
     }
     if (type === "neutrons") {
       pointToElement(tile.querySelector(".mass"));
-      setStatus(`Neutronen-Rechnung: Masse - Protonen = ${exp.mass} - ${exp.protons} = ${exp.neutrons}.`, "ok");
+      const text = `Neutronen-Rechnung: Masse - Protonen = ${exp.mass} - ${exp.protons} = ${exp.neutrons}.`;
+      showCentralHelp(text);
+      setStatus(text, "ok");
       return;
     }
     if (type === "electrons") {
       pointToElement(tile.querySelector(".z"));
-      setStatus(`Bei neutralem Atom gilt: Elektronen = Ordnungszahl = ${exp.electrons}.`, "ok");
+      const text = `Bei neutralem Atom gilt: Elektronen = Ordnungszahl = ${exp.electrons}.`;
+      showCentralHelp(text);
+      setStatus(text, "ok");
       return;
     }
     if (type === "valence") {
@@ -606,7 +680,9 @@
       const groupIndex = GROUP_LABELS.indexOf(String(exp.mainGroup));
       const groupLabel = groupIndex >= 0 ? document.querySelector(`#group-labels span:nth-child(${groupIndex + 1})`) : null;
       pointToElement(groupLabel);
-      setStatus(`Im Lernmodell gilt: Valenzelektronen entsprechen der Hauptgruppe (${exp.mainGroup}) -> ${exp.valence}.`, "ok");
+      const text = `Im Lernmodell gilt: Valenzelektronen entsprechen der Hauptgruppe (${exp.mainGroup}) -> ${exp.valence}.`;
+      showCentralHelp(text);
+      setStatus(text, "ok");
       return;
     }
   }
