@@ -368,6 +368,53 @@
   .status.ok { color: var(--good); }
   .status.bad { color: var(--bad); }
 
+  .community-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: .84rem;
+    margin-bottom: 8px;
+  }
+  .community-label {
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .community-value {
+    color: #c7e7ff;
+    font-weight: 700;
+  }
+  .stars {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+  .star-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: rgba(15, 23, 42, 0.75);
+    color: #e2e8f0;
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .star-btn.active {
+    border-color: rgba(251, 191, 36, 0.9);
+    background: rgba(234, 179, 8, 0.25);
+    color: #fde68a;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.35);
+  }
+  #rating-msg {
+    margin-top: 6px;
+    min-height: 18px;
+    font-size: .8rem;
+    color: var(--muted);
+  }
+
   .atom {
     display: grid;
     place-items: center;
@@ -447,6 +494,26 @@
           1) Waehle ein Element im PSE. 2) Lies Hauptgruppe, Periode, Ordnungszahl und Masse selbst ab.
           3) Trage die Werte ein und pruefe sie. 4) Setze Protonen, Neutronen, Ringe und Elektronen einzeln.
         </p>
+      </div>
+
+      <div class="panel" id="community-panel">
+        <div class="community-row">
+          <span class="community-label" id="vis-title">Besucherzaehler</span>
+          <span class="community-value" id="vis-count">...</span>
+        </div>
+        <div class="community-row">
+          <span class="community-label" id="rate-title">Bewertung Lernmodus</span>
+          <span class="community-value" id="rate-summary">-</span>
+        </div>
+        <div class="stars" id="star-wrap">
+          <button class="star-btn" data-rate="1" type="button">1</button>
+          <button class="star-btn" data-rate="2" type="button">2</button>
+          <button class="star-btn" data-rate="3" type="button">3</button>
+          <button class="star-btn" data-rate="4" type="button">4</button>
+          <button class="star-btn" data-rate="5" type="button">5</button>
+        </div>
+        <button class="primary" id="btnRate" type="button">Bewertung senden</button>
+        <div id="rating-msg"></div>
       </div>
 
       <div class="panel">
@@ -529,6 +596,15 @@
       countNeutrons: "Neutronen",
       countRings: "Ringe",
       countElectrons: "Elektronen",
+      visTitle: "Besucherzaehler",
+      visGlobal: "Global: {count}",
+      visLocal: "Lokal: {count}",
+      rateTitle: "Bewertung Lernmodus",
+      rateButton: "Bewertung senden",
+      rateSummary: "{avg}/5 ({count})",
+      rateSummaryEmpty: "Noch keine",
+      rateChoose: "Bitte zuerst 1 bis 5 waehlen.",
+      rateThanks: "Danke! Deine Bewertung wurde gespeichert.",
       selectedMsg: "Element gewaehlt: {name} ({sym}). Jetzt Werte aus dem PSE ablesen und eintragen.",
       mustSelect: "Bitte zuerst ein Element im PSE auswaehlen.",
       helpZ: "Ordnungszahl findest du links oben im Feld von {name}: {z}.",
@@ -570,6 +646,15 @@
       countNeutrons: "Neutrons",
       countRings: "Shells",
       countElectrons: "Electrons",
+      visTitle: "Visitor counter",
+      visGlobal: "Global: {count}",
+      visLocal: "Local: {count}",
+      rateTitle: "Learning mode rating",
+      rateButton: "Submit rating",
+      rateSummary: "{avg}/5 ({count})",
+      rateSummaryEmpty: "No ratings yet",
+      rateChoose: "Please choose a rating from 1 to 5 first.",
+      rateThanks: "Thanks! Your rating was saved.",
       selectedMsg: "Selected element: {name} ({sym}). Now read values from the periodic table and enter them.",
       mustSelect: "Please select an element in the periodic table first.",
       helpZ: "Atomic number is at the top-left of {name}: {z}.",
@@ -604,8 +689,13 @@
       rings: 0,
       electronsPerRing: []
     },
-    helpTimer: null
+    helpTimer: null,
+    selectedRating: 0,
+    visitorCount: null,
+    visitorScope: "local"
   };
+
+  const RATING_KEY = "elements_lernmodus_rating";
 
   function setLanguage(lang) {
     currentLang = lang === "en" ? "en" : "de";
@@ -653,6 +743,13 @@
       btn.title = tr("helpTitle");
     });
 
+    document.getElementById("vis-title").textContent = tr("visTitle");
+    document.getElementById("rate-title").textContent = tr("rateTitle");
+    document.getElementById("btnRate").textContent = tr("rateButton");
+
+    updateVisitorDisplay();
+    updateRatingSummary();
+
     updateCountChips();
     if (state.selected) {
       const el = state.selected;
@@ -666,6 +763,83 @@
       });
       document.getElementById("taskText").textContent = tr("taskSelected", { name: el.name });
     }
+  }
+
+  function updateVisitorDisplay() {
+    const text = state.visitorCount === null
+      ? "..."
+      : (state.visitorScope === "global"
+        ? tr("visGlobal", { count: state.visitorCount })
+        : tr("visLocal", { count: state.visitorCount }));
+    document.getElementById("vis-count").textContent = text;
+  }
+
+  async function initVisitorCounter() {
+    const localCount = Number(localStorage.getItem("elements_lernmodus_local_visits") || "0") + 1;
+    localStorage.setItem("elements_lernmodus_local_visits", String(localCount));
+    state.visitorCount = localCount;
+    state.visitorScope = "local";
+    updateVisitorDisplay();
+
+    try {
+      const resp = await fetch("https://api.countapi.xyz/hit/kennerblick-elements/lernmodus");
+      const data = await resp.json();
+      if (data && typeof data.value === "number") {
+        state.visitorCount = data.value;
+        state.visitorScope = "global";
+        updateVisitorDisplay();
+      }
+    } catch (e) {
+      // local fallback is already set
+    }
+  }
+
+  function getRatingStore() {
+    try {
+      const raw = localStorage.getItem(RATING_KEY);
+      if (!raw) return { sum: 0, count: 0 };
+      const data = JSON.parse(raw);
+      return {
+        sum: Number(data.sum) || 0,
+        count: Number(data.count) || 0
+      };
+    } catch (e) {
+      return { sum: 0, count: 0 };
+    }
+  }
+
+  function saveRatingStore(store) {
+    localStorage.setItem(RATING_KEY, JSON.stringify(store));
+  }
+
+  function setSelectedRating(value) {
+    state.selectedRating = value;
+    document.querySelectorAll(".star-btn").forEach(btn => {
+      const v = Number(btn.dataset.rate);
+      btn.classList.toggle("active", v <= state.selectedRating);
+    });
+  }
+
+  function updateRatingSummary() {
+    const store = getRatingStore();
+    const summary = store.count > 0
+      ? tr("rateSummary", { avg: (store.sum / store.count).toFixed(1), count: store.count })
+      : tr("rateSummaryEmpty");
+    document.getElementById("rate-summary").textContent = summary;
+  }
+
+  function submitRating() {
+    const msg = document.getElementById("rating-msg");
+    if (state.selectedRating < 1 || state.selectedRating > 5) {
+      msg.textContent = tr("rateChoose");
+      return;
+    }
+    const store = getRatingStore();
+    store.sum += state.selectedRating;
+    store.count += 1;
+    saveRatingStore(store);
+    updateRatingSummary();
+    msg.textContent = tr("rateThanks");
   }
 
   function getMainGroup(group) {
@@ -1143,10 +1317,16 @@
   document.querySelectorAll(".help-btn").forEach(btn => {
     btn.addEventListener("click", () => showInputHelp(btn.dataset.help));
   });
+  document.querySelectorAll(".star-btn").forEach(btn => {
+    btn.addEventListener("click", () => setSelectedRating(Number(btn.dataset.rate)));
+  });
+  document.getElementById("btnRate").addEventListener("click", submitRating);
   document.getElementById("lang-de").addEventListener("click", () => setLanguage("de"));
   document.getElementById("lang-en").addEventListener("click", () => setLanguage("en"));
 
   buildPSE();
+  updateRatingSummary();
+  initVisitorCounter();
   setLanguage(currentLang);
   drawAtom();
 </script>
