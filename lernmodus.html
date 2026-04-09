@@ -84,7 +84,7 @@
     max-width: 1200px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
+    grid-template-columns: 1fr;
     gap: 16px;
   }
   .panel {
@@ -214,9 +214,12 @@
   }
 
   .right-grid {
-    display: grid;
-    grid-template-rows: auto auto 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 12px;
+  }
+  .panel.atom {
+    order: -1;
   }
 
   .taskline {
@@ -371,9 +374,9 @@
     border-radius: 14px;
     border: 1px solid var(--line);
     background: radial-gradient(500px 240px at 50% 18%, rgba(125,211,252,.12), rgba(0,0,0,0));
-    padding: 8px;
+    padding: 14px;
   }
-  canvas { width: min(100%, 390px); height: auto; }
+  canvas { width: min(100%, 560px); height: auto; }
 
   .counts {
     margin-top: 8px;
@@ -473,7 +476,7 @@
       </div>
 
       <div class="panel atom">
-        <canvas id="atomCanvas" width="390" height="390"></canvas>
+        <canvas id="atomCanvas" width="560" height="560"></canvas>
         <div class="counts">
           <span id="cProtons">Protonen: 0</span>
           <span id="cNeutrons">Neutronen: 0</span>
