@@ -45,6 +45,43 @@
     overflow-x: auto;
     margin-bottom: 16px;
   }
+  .pse-layout {
+    position: relative;
+    width: max-content;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-top: 20px;
+  }
+  #group-labels {
+    position: absolute;
+    left: 24px;
+    top: 0;
+    display: grid;
+    grid-template-columns: repeat(18, 42px);
+    gap: 2px;
+  }
+  #group-labels span {
+    text-align: center;
+    font-size: 0.58rem;
+    color: var(--muted);
+    line-height: 1;
+  }
+  #period-labels {
+    position: absolute;
+    left: 0;
+    top: 20px;
+    display: grid;
+    grid-template-rows: repeat(7, 38px);
+    gap: 2px;
+    width: 22px;
+  }
+  #period-labels span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.62rem;
+    color: var(--muted);
+  }
   #pse-meta {
     max-width: 980px;
     margin: 0 auto 12px;
@@ -87,7 +124,14 @@
   }
   .el .sym { font-size: 0.95rem; font-weight: 700; line-height: 1; }
   .el .num { font-size: 0.5rem; color: rgba(255,255,255,0.7); line-height: 1; }
-  .el .nam { font-size: 0.38rem; color: rgba(255,255,255,0.6); line-height: 1; }
+  .el .mass {
+    position: absolute;
+    right: 2px;
+    bottom: 1px;
+    font-size: 0.43rem;
+    color: rgba(255,255,255,0.85);
+    line-height: 1;
+  }
 
   /* Kategoriefarben */
   .cat-alkali        { background: #7f1d1d; }
@@ -221,6 +265,9 @@
   /* Responsive */
   @media (max-width: 720px) {
     #lower { grid-template-columns: 1fr; }
+    .pse-layout { padding-left: 20px; padding-top: 18px; }
+    #group-labels { left: 20px; grid-template-columns: repeat(18, 36px); }
+    #period-labels { top: 18px; grid-template-rows: repeat(7, 32px); width: 18px; }
     #pse { grid-template-columns: repeat(18, 36px); grid-template-rows: repeat(10, 32px); }
     .el { width: 36px; height: 32px; }
     .el .sym { font-size: 0.8rem; }
@@ -250,7 +297,11 @@
 
 <!-- PSE -->
 <div id="pse-wrapper">
-  <div id="pse"></div>
+  <div class="pse-layout">
+    <div id="group-labels"></div>
+    <div id="period-labels"></div>
+    <div id="pse"></div>
+  </div>
 </div>
 <div id="pse-meta">PSE-Daten: Klicke ein Element an, um Periode, Hauptgruppe und Atommasse zu sehen.</div>
 
@@ -434,11 +485,28 @@ function getMainGroup(group) {
 // ===== PSE rendern =====
 function buildPSE() {
   const grid = document.getElementById('pse');
+  const groups = document.getElementById('group-labels');
+  const periods = document.getElementById('period-labels');
+
+  groups.innerHTML = '';
+  for (let i = 1; i <= 18; i++) {
+    const label = document.createElement('span');
+    label.textContent = i;
+    groups.appendChild(label);
+  }
+
+  periods.innerHTML = '';
+  for (let i = 1; i <= 7; i++) {
+    const label = document.createElement('span');
+    label.textContent = i;
+    periods.appendChild(label);
+  }
+
   ELEMENTS.forEach(el => {
     const div = document.createElement('div');
     div.className = `el cat-${el.cat}`;
     div.dataset.z = el.z;
-    div.innerHTML = `<span class="num">${el.z}</span><span class="sym">${el.sym}</span><span class="nam">${el.name.substring(0,6)}</span>`;
+    div.innerHTML = `<span class="num">${el.z}</span><span class="sym">${el.sym}</span><span class="mass">${Math.round(el.mass)}</span>`;
     const hg = getMainGroup(el.group);
     div.title = `${el.name} (Z=${el.z}, Periode ${el.period}, Hauptgruppe ${hg === null ? '-' : hg}, Masse ${Math.round(el.mass)})`;
     div.style.gridColumn = el.col;
